@@ -1,9 +1,0 @@
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.csprojAssemblyReference.cache
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.AssemblyInfoInputs.cache
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.AssemblyInfo.cs
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.csproj.CoreCompileInputs.cache
-/home/ak/dotnet/Autocontroller/src/AutoController/bin/Debug/netcoreapp3.1/AutoController.deps.json
-/home/ak/dotnet/Autocontroller/src/AutoController/bin/Debug/netcoreapp3.1/AutoController.dll
-/home/ak/dotnet/Autocontroller/src/AutoController/bin/Debug/netcoreapp3.1/AutoController.pdb
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.dll
-/home/ak/dotnet/Autocontroller/src/AutoController/obj/Debug/netcoreapp3.1/AutoController.pdb
