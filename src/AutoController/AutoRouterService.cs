@@ -113,6 +113,7 @@ namespace AutoController
                             rParam.Handler = Handler.GetRequestDelegate("GetHandlerPage",
                                                                         new Type[] {typeof(T), givenType},
                                                                         this,
+                                                                        r.InteractingType,
                                                                         new object[] {DatabaseType, _connectionString,(uint)20,r.ItemsPerPage});
                             _autoroutes.Add(rkeyWithPage, rParam);
                             LogInformation(String.Format("Add route {0} for {1}", rkeyWithPage, givenType));
@@ -139,6 +140,9 @@ namespace AutoController
         /// Using System.Reflection generates api controller for given type and properties
         /// By default, Controller name is the same as class name
         /// </summary>
+        /// <param name="routePrefix">Prefix segment for controller</param>
+        /// <param name="databaseType">Database type for DBContext</param>
+        /// <param name="connectionString">Database connection string</param>
         public void GetAutoControllers( string routePrefix, DatabaseTypes databaseType, string connectionString)
         {
             _connectionString = connectionString;
