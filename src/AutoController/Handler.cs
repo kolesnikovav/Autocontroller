@@ -1,52 +1,68 @@
-// using System;
-// using Microsoft.AspNetCore.Http;
-// using System.Threading.Tasks;
-// using Microsoft.AspNetCore.Routing;
-// using Microsoft.AspNetCore.Mvc;
-// using System.Reflection;
-// using Microsoft.AspNetCore.Builder;
-// using Microsoft.Extensions.DependencyInjection;
-// using Microsoft.Extensions.Logging;
-// using Microsoft.Extensions.Logging.Abstractions;
-
-// namespace AutoController
-// {
-//     // public static class Handler
-//     // {
-//     //     public static async Task HandleGetDefault(RouteContext context)
-//     //     {
-//     //         var r  = context.Handler.Invoke?().RouteData.DataTokens;
-//     //         await context.Response.WriteAsync("");
-//     //     }
-//     // }
-// }
-
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoController
 {
-    public class AdminRoute : IRouter
+    internal static class Handler
     {
-        public VirtualPathData GetVirtualPath(VirtualPathContext context)
+        private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
         {
-            throw new NotImplementedException();
+            if (dbType == DatabaseTypes.SQLite) return SQLiteProvider<T>.GetBuilder(connString);
+            if (dbType == DatabaseTypes.SQLServer) return SQLServerProvider<T>.GetBuilder(connString);
+            return PostgresProvider<T>.GetBuilder(connString);
         }
-
-        public async Task RouteAsync(RouteContext context)
+        private static RequestDelegate GetHandlerPage<T, TE>(DatabaseTypes dbType, string connString, uint pageSize, uint pageNumber) where T : DbContext, IDisposable
+                                                                                                                                      where TE : class
         {
-            string url = context.HttpContext.Request.Path.Value.TrimEnd('/');
-            if (url.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase))
+            return async (context) =>
             {
-                context.Handler = async ctx =>
+                int skip = (int)((pageNumber - 1) * pageSize);
+
+                IEnumerable<TE> queryResult;
+                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+                Type t = typeof(T);
+                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
                 {
-                    ctx.Response.ContentType = "text/html;charset=utf-8";
-                    await ctx.Response.WriteAsync("Привет admin!");
-                };
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)pageSize).ToList<TE>();
+                }
+                await context.Response.WriteAsync(queryResult.ToString());
+            };
+        }
+        private static RequestDelegate GetCountOf<T, TE>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
+                                                                                                 where TE : class
+        {
+            return async (context) =>
+            {
+                int queryResult;
+                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+                Type t = typeof(T);
+                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+                {
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().Count();
+                }
+                await context.Response.WriteAsync(queryResult.ToString());
+            };
+        }
+        private static MethodInfo GetGenericMethod(string name, Type[] types)
+        {
+            MethodInfo mi = typeof(Handler).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where( v => v.Name == name).FirstOrDefault();
+            if (mi == null)
+            {
+                throw(new ArgumentException("Method "+ name +" does not exists","name"));
             }
-            await Task.CompletedTask;
+            MethodInfo miGeneric = mi.MakeGenericMethod(types);
+            return miGeneric;
+        }
+        public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
+        {
+            return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args);
         }
     }
 }

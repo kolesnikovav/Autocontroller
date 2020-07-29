@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoController
 {
@@ -15,39 +16,48 @@ namespace AutoController
         /// Adds AutoController as singletone service and register it in Dependency Injection
         ///
         /// </summary>
+        /// <param name="<T>">The type of DBContext/>.</param>
         /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-        public static void AddAutoController(this IServiceCollection services)
+        public static void AddAutoController<T>(this IServiceCollection services) where T: DbContext
         {
-            services.AddSingleton(typeof(AutoRouterService));
+            services.AddSingleton(typeof(AutoRouterService<T>));
         }
-        private static AutoRouterService GetAutoRouterService(IApplicationBuilder builder)
+        private static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T: DbContext
         {
-            return (AutoRouterService)builder.ApplicationServices.GetService(typeof(AutoRouterService));
+            return (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>));
         }
         /// <summary>
-        /// Adds autocontroller.
+        /// Adds autocontroller for DBContext.
         ///
         /// </summary>
+        /// <param name=<T>The DBContext derived type</param>
         /// <param name="appBuilder">The <see cref="ApplicationBuilder"/>.</param>
         /// <param name="relatedType">The type to be creating for controller</param>
         /// <param name="routePrefix">start prefix for route</param>
-        public static void UseAutoController(
+        /// <param name="useLogging">log information for route</param>
+        /// <param name="databaseType">The type of your database</param>
+        /// <param name="connectionString">Database connection string</param>
+        public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,
-            Type relatedType, string routePrefix)
+            Type relatedType, string routePrefix, bool useLogging, DatabaseTypes databaseType, string connectionString) where T: DbContext
         {
             if (appBuilder == null)
             {
                 throw new ArgumentNullException(nameof(appBuilder));
             }
             var logger = GetOrCreateLogger(appBuilder, LogCategoryName);
-            AutoRouterService autoRouter = GetAutoRouterService(appBuilder);
-            autoRouter.GetAutoControllers(relatedType, routePrefix);
+            AutoRouterService<T> autoRouter = GetAutoRouterService<T>(appBuilder);
+            if (useLogging)
+            {
+                autoRouter.AttachToLogger(logger);
+            }
+            autoRouter.GetAutoControllers(relatedType, routePrefix, databaseType, connectionString);
             foreach(var route in autoRouter._autoroutes)
             {
                 //appBuilder.UseRouter()
                 //appBuilder.UseRouter.UseMiddleware().UseRouter()
             }
-       }
+        }
         private static ILogger GetOrCreateLogger(
             IApplicationBuilder appBuilder,
             string logCategoryName)
