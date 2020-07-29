@@ -39,7 +39,10 @@ namespace AutoController
         /// <param name="connectionString">Database connection string</param>
         public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,
-            Type relatedType, string routePrefix, bool useLogging, DatabaseTypes databaseType, string connectionString) where T: DbContext
+            string routePrefix,
+            bool useLogging,
+            DatabaseTypes databaseType,
+            string connectionString) where T: DbContext
         {
             if (appBuilder == null)
             {
@@ -51,12 +54,25 @@ namespace AutoController
             {
                 autoRouter.AttachToLogger(logger);
             }
-            autoRouter.GetAutoControllers(relatedType, routePrefix, databaseType, connectionString);
+            autoRouter.GetAutoControllers( routePrefix, databaseType, connectionString);
             foreach(var route in autoRouter._autoroutes)
             {
                 //appBuilder.UseRouter()
                 //appBuilder.UseRouter.UseMiddleware().UseRouter()
             }
+        }
+        /// <summary>
+        /// Adds autocontroller for DBContext.
+        ///
+        /// </summary>
+        /// <param name=<T>The DBContext derived type</param>
+        /// <param name="appBuilder">The <see cref="ApplicationBuilder"/>.</param>
+        /// <param name="options">Options for autocontroller</param>
+        public static void UseAutoController<T>(
+            this IApplicationBuilder appBuilder,
+            IAutoControllerOptions options) where T: DbContext
+        {
+            UseAutoController<T>(appBuilder, options.RoutePrefix, options.LogInformation,options.DatabaseType,options.ConnectionString);
         }
         private static ILogger GetOrCreateLogger(
             IApplicationBuilder appBuilder,

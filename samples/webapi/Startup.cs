@@ -38,7 +38,7 @@ namespace webapi
                 app.UseDeveloperExceptionPage();
             }
             string connStr = Configuration.GetConnectionString("DefaultConnection");
-            app.UseAutoController<ApplicationDBContext>(typeof(ApplicationDBContext),"api", true, DatabaseTypes.SQLite, connStr);
+            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr);
 
             app.UseRouting();
 

@@ -139,13 +139,13 @@ namespace AutoController
         /// Using System.Reflection generates api controller for given type and properties
         /// By default, Controller name is the same as class name
         /// </summary>
-        public void GetAutoControllers(Type typeForAutocontroller, string routePrefix, DatabaseTypes databaseType, string connectionString)
+        public void GetAutoControllers( string routePrefix, DatabaseTypes databaseType, string connectionString)
         {
             _connectionString = connectionString;
             DatabaseType = databaseType;
             _routePrefix = routePrefix;
-            ProcessType (typeForAutocontroller);
-            PropertyInfo[] p = typeForAutocontroller.GetProperties();
+            ProcessType (typeof(T));
+            PropertyInfo[] p = typeof(T).GetProperties();
             foreach (PropertyInfo t in p)
             {
                 ProcessType (t.PropertyType);

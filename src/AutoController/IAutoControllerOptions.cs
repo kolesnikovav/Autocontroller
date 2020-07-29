@@ -10,8 +10,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AutoController
 {
-    public interface IAutoControllerOptons
+        /// <summary>
+        /// Options for autocontroller
+        /// </summary>
+    public interface IAutoControllerOptions
     {
+        /// <summary>
+        /// Start prefix segment for route
+        /// </summary>
         string RoutePrefix {get;set;}
         string DefaultGetAction {get;set;}
         string DefaultGetCountAction {get;set;}
@@ -19,8 +25,17 @@ namespace AutoController
         string DefaultSortParameter {get;set;}
         string DefaultSortDirectionParameter {get;set;}
         string DefaultPostAction {get;set;}
+        /// <summary>
+        /// Database type for DBContext
+        /// </summary>
         DatabaseTypes DatabaseType {get;set;}
+        /// <summary>
+        /// Connection string for DBContext
+        /// </summary>
         string ConnectionString {get;set;}
+        /// <summary>
+        /// Use logger for autocontroller
+        /// </summary>
         bool LogInformation {get;set;}
     }
 }
