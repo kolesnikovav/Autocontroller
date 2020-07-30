@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
@@ -46,7 +47,6 @@ namespace AutoController
                 }
             }
             return true;
-
         }
         private static RequestDelegate GetHandler<T, TE>(
             DatabaseTypes dbType,
@@ -76,11 +76,25 @@ namespace AutoController
                 {
                     if (QueryParams.pageSize == 0)
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
+                        if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+                        {
+                            queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
+                        }
+                        else
+                        {
+                            queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
+                        }
                     }
                     else
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                        if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+                        {
+                            queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                        }
+                        else
+                        {
+                            queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                        }
                     }
                 }
                 if (interactingType == InteractingType.JSON)
