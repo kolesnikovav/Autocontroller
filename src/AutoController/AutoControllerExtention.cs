@@ -55,6 +55,14 @@ namespace AutoController
         /// <param name="connectionString">Database connection string</param>
         /// <param name="interactingType">Interacting type</param>
         /// <param name="jsonOptions">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultPageParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultItemsPerPageParameter">Sets the JsonSerializerOptions</param>
         public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,
             string routePrefix,
@@ -62,7 +70,16 @@ namespace AutoController
             DatabaseTypes databaseType,
             string connectionString,
             InteractingType? interactingType,
-            JsonSerializerOptions jsonOptions = null) where T: DbContext
+            JsonSerializerOptions jsonOptions = null,
+            string DefaultGetAction = "Index",
+            string DefaultGetCountAction = "Count",
+            string DefaultPostAction = "Save",
+            string DefaultFilterParameter = "filter",
+            string DefaultSortParameter = "sort",
+            string DefaultSortDirectionParameter = "sortdirection",
+            string DefaultPageParameter = "page",
+            string DefaultItemsPerPageParameter = "size"
+            ) where T: DbContext
         {
             if (appBuilder == null)
             {
@@ -74,7 +91,12 @@ namespace AutoController
             {
                 autoRouter.AttachToLogger(logger);
             }
-            autoRouter.GetAutoControllers( routePrefix, databaseType, connectionString, interactingType, jsonOptions);
+            autoRouter.GetAutoControllers(
+                routePrefix,
+                databaseType,
+                connectionString,
+                interactingType,
+                jsonOptions);
             foreach(var route in autoRouter._autoroutes)
             {
                 AddRoute(appBuilder, route.Key, route.Value);
@@ -97,7 +119,15 @@ namespace AutoController
              options.DatabaseType,
              options.ConnectionString,
              options.InteractingType,
-             options.JsonSerializerOptions);
+             options.JsonSerializerOptions,
+             options.DefaultGetAction,
+             options.DefaultGetCountAction,
+             options.DefaultPostAction,
+             options.DefaultFilterParameter,
+             options.DefaultSortParameter,
+             options.DefaultSortDirectionParameter,
+             options.DefaultPageParameter,
+             options.DefaultItemsPerPageParameter);
         }
         private static ILogger GetOrCreateLogger(
             IApplicationBuilder appBuilder,

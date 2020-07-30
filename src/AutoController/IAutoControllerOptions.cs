@@ -43,6 +43,14 @@ namespace AutoController
         /// <summary>
         ///
         /// </summary>
+        string DefaultPageParameter {get;set;}
+        /// <summary>
+        ///
+        /// </summary>
+        string DefaultItemsPerPageParameter {get;set;}
+        /// <summary>
+        ///
+        /// </summary>
         string DefaultPostAction {get;set;}
         /// <summary>
         /// Database type for DBContext

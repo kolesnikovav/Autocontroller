@@ -14,20 +14,21 @@ using System.Net.Http;
 namespace AutoController
 {
     /// <summary>
-    ///
+    /// Discribe request path with http request type
     /// </summary>
     public class RouteKey
     {
         /// <summary>
-        ///
+        /// Request path
         /// </summary>
         public string Path { get; set; }
         /// <summary>
-        ///
+        /// Http request method
+        /// Currently, GET and POST supported
         /// </summary>
         public HttpMethod HttpMethod { get; set; }
         /// <summary>
-        ///
+        /// route key string presentation
         /// </summary>
 
         public override string ToString()
@@ -37,12 +38,12 @@ namespace AutoController
 
     }
     /// <summary>
-    ///
+    /// Route parameter for handling request
     /// </summary>
     public class RouteParameters
     {
         /// <summary>
-        ///
+        /// Type of Entity in DBContext
         /// </summary>
         public Type EntityType { get; set; }
         /// <summary>
@@ -50,7 +51,7 @@ namespace AutoController
         /// </summary>
         public uint ItemsPerPage { get; set; }
         /// <summary>
-        ///
+        /// handler for request
         /// </summary>
         public RequestDelegate Handler { get; set; }
     }
@@ -61,7 +62,7 @@ namespace AutoController
     public class AutoRouterService<T> where T: DbContext, IDisposable
     {
         /// <summary>
-        ///
+        /// The Dictionary with all used routes
         /// </summary>
         public Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
         private string _routePrefix;
@@ -73,6 +74,14 @@ namespace AutoController
         private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
         private Type  KeyAttributeType  = typeof(KeyAttribute);
         private string  _connectionString;
+        private  string _defaultGetAction;
+        private  string _defaultGetCountAction;
+        private  string _defaultPostAction;
+        private  string _defaultFilterParameter;
+        private  string _defaultSortParameter;
+        private string _defaultSortDirectionParameter;
+        private  string _defaultPageParameter;
+        private string _defaultItemsPerPageParameter;
         private void LogInformation(string message)
         {
             if (logger != null)
@@ -126,11 +135,11 @@ namespace AutoController
                 }
             }
         }
-        private void AddGetRoutesForEntity( string controllerName, string DefaultGetAction, Type givenType, InteractingType interactingType)
+        private void AddGetRoutesForEntity( string controllerName, Type givenType, InteractingType interactingType)
         {
             string basePath = _startRoutePath + controllerName;
-            string countPath = basePath + "/Count";
-            string defaultPath = basePath + "/" + DefaultGetAction;
+            string countPath = basePath + "/" + _defaultGetCountAction;
+            string defaultPath = basePath + "/" + _defaultGetAction;
             RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Get};
             RouteKey rkeyCount = new RouteKey() { Path = countPath, HttpMethod = HttpMethod.Get};
             if (!_autoroutes.ContainsKey(rkeyDefault))
@@ -156,10 +165,10 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
             }
         }
-        private void AddPostRouteForEntity( string controllerName, string DefaultPostAction, Type givenType, InteractingType interactingType)
+        private void AddPostRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
         {
             string basePath = _startRoutePath + controllerName;
-            string defaultPath = basePath + "/" + DefaultPostAction;
+            string defaultPath = basePath + "/" + _defaultPostAction;
             RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post};
             if (!_autoroutes.ContainsKey(rkeyDefault))
             {
@@ -182,8 +191,8 @@ namespace AutoController
                 {
                     InteractingType usedInteractingType = _defaultInteractingType == null ? r.InteractingType : (InteractingType)_defaultInteractingType;
                     string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
-                    AddGetRoutesForEntity( controllerName, r.DefaultGetAction, givenType, usedInteractingType);
-                    AddPostRouteForEntity( controllerName, "Save", givenType, usedInteractingType);
+                    AddGetRoutesForEntity( controllerName, givenType, usedInteractingType);
+                    AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
                 }
             }
             if (givenType.IsGenericType)
@@ -203,18 +212,42 @@ namespace AutoController
         /// <param name="connectionString">Database connection string</param>
         /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
         /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
+        /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultPageParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultItemsPerPageParameter">Sets the JsonSerializerOptions</param>
         public void GetAutoControllers(
             string routePrefix,
             DatabaseTypes databaseType,
             string connectionString,
             InteractingType? interactingType,
-            JsonSerializerOptions jsonSerializerOptions = null)
+            JsonSerializerOptions jsonSerializerOptions = null,
+            string DefaultGetAction = "Index",
+            string DefaultGetCountAction = "Count",
+            string DefaultPostAction = "Save",
+            string DefaultFilterParameter = "filter",
+            string DefaultSortParameter = "sort",
+            string DefaultSortDirectionParameter = "sortdirection",
+            string DefaultPageParameter = "page",
+            string DefaultItemsPerPageParameter = "size")
         {
             _connectionString = connectionString;
             DatabaseType = databaseType;
             _routePrefix = routePrefix;
             _defaultInteractingType = interactingType;
             _jsonOptions = jsonSerializerOptions;
+            _defaultGetAction = DefaultGetAction;
+            _defaultGetCountAction = DefaultGetCountAction;
+            _defaultPostAction = DefaultPostAction;
+            _defaultFilterParameter = DefaultFilterParameter;
+            _defaultSortParameter = DefaultSortParameter;
+            _defaultSortDirectionParameter = DefaultSortDirectionParameter;
+            _defaultPageParameter = DefaultPageParameter;
+            _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
             _startRoutePath = String.IsNullOrWhiteSpace(_routePrefix) ? String.Empty : _routePrefix + "/";
             ProcessType(typeof(T));
             PropertyInfo[] p = typeof(T).GetProperties();

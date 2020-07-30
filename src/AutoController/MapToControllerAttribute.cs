@@ -26,20 +26,14 @@ namespace AutoController
         /// </summary>
         public uint ItemsPerPage { get; set; } = 0;
         /// <summary>
-        /// The name of default get action
-        /// Index by default
-        /// </summary>
-        public string DefaultGetAction { get; set; }
-        /// <summary>
         /// Constructor with specified controller name
         /// </summary>
-        public MapToControllerAttribute(string controllerName, string collectionName, InteractingType iType, uint itemsPerPage = 0, string defaultGetAction = "Index")
+        public MapToControllerAttribute(string controllerName, string collectionName, InteractingType iType, uint itemsPerPage = 0)
         {
             ControllerName = controllerName;
             CollectionName = collectionName;
             InteractingType = iType;
             ItemsPerPage = itemsPerPage;
-            DefaultGetAction = defaultGetAction;
         }
     }
 }

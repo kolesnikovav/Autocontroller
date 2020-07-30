@@ -108,6 +108,7 @@ namespace AutoController
             return async (context) =>
             {
                 TE recivedData;
+                List<TE> recivedDataList;
 
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
@@ -118,15 +119,39 @@ namespace AutoController
                         using (var reader = new StreamReader(context.Request.Body))
                         {
                             var body = await reader.ReadToEndAsync();
-                            recivedData = JsonSerializer.Deserialize<TE>(body);
-                            if (recivedData != null)
+                            try
                             {
-                                dbcontext.Set<TE>().Add(recivedData);
-                                await dbcontext.SaveChangesAsync();
-                                byte[] jsonUtf8Bytes;
-                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
-                                await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                recivedData = JsonSerializer.Deserialize<TE>(body);
+                                if (recivedData != null)
+                                {
+                                    dbcontext.Set<TE>().Add(recivedData);
+                                    await dbcontext.SaveChangesAsync();
+                                    byte[] jsonUtf8Bytes;
+                                    jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
+                                    await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                }
                             }
+                            catch
+                            {
+                                // It can be array
+                                try
+                                {
+                                    recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                                    if (recivedDataList != null)
+                                    {
+                                        dbcontext.Set<TE>().AddRange(recivedDataList);
+                                        await dbcontext.SaveChangesAsync();
+                                        byte[] jsonUtf8Bytes;
+                                        jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
+                                        await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                    }
+                                }
+                                catch
+                                {
+
+                                }
+                            }
+
                             // Do something
                         }
                     }
