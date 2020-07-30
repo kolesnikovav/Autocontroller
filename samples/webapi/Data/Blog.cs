@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi
 {
-    [MapToController("Blogs",InteractingType.JSON,25,false)]
+    [MapToController("Blogs",InteractingType.JSON,25,true)]
     public class Blog
     {
         [Key]

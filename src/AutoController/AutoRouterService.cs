@@ -84,6 +84,7 @@ namespace AutoController
         private string _defaultSortDirectionParameter;
         private  string _defaultPageParameter;
         private string _defaultItemsPerPageParameter;
+        private Dictionary<string,RequestParamName> _requestParams;
         private void LogInformation(string message)
         {
             if (logger != null)
@@ -157,6 +158,7 @@ namespace AutoController
                                                               allowAnonimus,
                                                               _authentificationPath,
                                                               _accessDeniedPath,
+                                                              _requestParams,
                                                              _jsonOptions });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -172,7 +174,8 @@ namespace AutoController
                                                             _connectionString,
                                                             allowAnonimus,
                                                             _authentificationPath,
-                                                            _accessDeniedPath });
+                                                            _accessDeniedPath,
+                                                            _requestParams });
                 _autoroutes.Add(rkeyCount, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
             }
@@ -272,6 +275,13 @@ namespace AutoController
             _defaultPageParameter = DefaultPageParameter;
             _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
             _startRoutePath = String.IsNullOrWhiteSpace(_routePrefix) ? String.Empty : _routePrefix + "/";
+            _requestParams = RequestParams.Create(
+                _defaultPageParameter,
+                _defaultItemsPerPageParameter,
+                _defaultFilterParameter,
+                _defaultSortParameter,
+                _defaultSortDirectionParameter
+            );
             ProcessType(typeof(T));
             PropertyInfo[] p = typeof(T).GetProperties();
             foreach (PropertyInfo t in p)

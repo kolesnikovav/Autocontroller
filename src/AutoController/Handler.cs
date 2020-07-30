@@ -55,50 +55,32 @@ namespace AutoController
             bool allowAnonimus,
             string authentificationPath,
             string accessDeniedPath,
+            Dictionary<string,RequestParamName> _requestParams,
             JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
                                                                 where TE : class
         {
             return async (context) =>
             {
-                // if (!allowAnonimus && !context.User.Identity.IsAuthenticated)
-                // {
-                //     context.Response.Redirect(authentificationPath);
-                //     if (!context.User.Identity.IsAuthenticated)
-                //     {
-                //         await context.Response.WriteAsync("Unauthorized access not allowed");
-                //         return;
-                //     }
-                // }
                 bool authResult = Authorization(context, allowAnonimus,authentificationPath,accessDeniedPath);
                 if (!authResult)
                 {
                     return;
                 }
-                uint pageSize = 0;
-                uint pageNumber = 0;
-                var RequestParams = context.Request.Query;
-                if (RequestParams.ContainsKey("page"))
-                {
-                    UInt32.TryParse(RequestParams["page"], out pageNumber);
-                }
-                if (RequestParams.ContainsKey("pagesize"))
-                {
-                    UInt32.TryParse(RequestParams["pagesize"], out pageSize);
-                }
-                int skip = (int)((pageNumber - 1) * pageSize);
+                var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
+                int skip = (int)((QueryParams.pageNumber - 1) * QueryParams.pageSize);
 
                 IEnumerable<TE> queryResult;
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
                 using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
                 {
-                    if (pageSize == 0)
+                    if (QueryParams.pageSize == 0)
                     {
                         queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
                     }
                     else
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)pageSize).ToList<TE>();
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
                     }
                 }
                 if (interactingType == InteractingType.JSON)
@@ -123,15 +105,18 @@ namespace AutoController
                                                          string connString,
                                                          bool allowAnonimus,
                                                          string authentificationPath,
-                                                         string accessDeniedPath) where T : DbContext, IDisposable
-                                                                                  where TE : class
+                                                         string accessDeniedPath,
+                                                         Dictionary<string,RequestParamName> requestParams) where T : DbContext, IDisposable
+                                                                                                            where TE : class
         {
             return async (context) =>
             {
-                if (!allowAnonimus && !context.User.Identity.IsAuthenticated)
+                bool authResult = Authorization(context, allowAnonimus,authentificationPath,accessDeniedPath);
+                if (!authResult)
                 {
-                    context.Response.Redirect(authentificationPath);
+                    return;
                 }
+                var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
                 int queryResult;
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
@@ -197,8 +182,6 @@ namespace AutoController
 
                                 }
                             }
-
-                            // Do something
                         }
                     }
                     else if (interactingType == InteractingType.XML)
@@ -236,6 +219,14 @@ namespace AutoController
             MethodInfo miGeneric = mi.MakeGenericMethod(types);
             return miGeneric;
         }
+        /// <summary>
+        /// Get the Handler for client request
+        ///
+        /// </summary>
+        /// <param name="name">The method name that will be invoked</param>
+        /// <param name="types">The generic type parameters</param>
+        /// <param name="instance">The object instance for execution</param>
+        /// <param name="args">The arguments for invoked method</param>
         public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
         {
             return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args);
