@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -34,6 +35,9 @@ namespace AutoController
     {
         public Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
         private string _routePrefix;
+        private string _startRoutePath;
+        private InteractingType?  _defaultInteractingType;
+        private JsonSerializerOptions  _jsonOptions;
         private Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
         private ILogger logger;
         private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
@@ -89,6 +93,53 @@ namespace AutoController
                 }
             }
         }
+        private void AddGetRoutesForEntity( string controllerName, string DefaultGetAction, Type givenType, InteractingType interactingType)
+        {
+            string basePath = _startRoutePath + controllerName;
+            string countPath = basePath + "/Count";
+            string defaultPath = basePath + "/" + DefaultGetAction;
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Get};
+            RouteKey rkeyCount = new RouteKey() { Path = countPath, HttpMethod = HttpMethod.Get};
+            if (!_autoroutes.ContainsKey(rkeyDefault))
+            {
+                RouteParameters rParam = new RouteParameters();
+                rParam.EntityType = givenType;
+                rParam.Handler = Handler.GetRequestDelegate("GetHandler",
+                                                            new Type[] { typeof(T), givenType },
+                                                            this,
+                                                            new object[] { DatabaseType, _connectionString, interactingType, _jsonOptions });
+                _autoroutes.Add(rkeyDefault, rParam);
+                LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
+            }
+            if (!_autoroutes.ContainsKey(rkeyCount))
+            {
+                RouteParameters rParam = new RouteParameters();
+                rParam.EntityType = givenType;
+                rParam.Handler = Handler.GetRequestDelegate("GetCountOf",
+                                                            new Type[] { typeof(T), givenType },
+                                                            this,
+                                                            new object[] { DatabaseType, _connectionString });
+                _autoroutes.Add(rkeyCount, rParam);
+                LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
+            }
+        }
+        private void AddPostRouteForEntity( string controllerName, string DefaultPostAction, Type givenType, InteractingType interactingType)
+        {
+            string basePath = _startRoutePath + controllerName;
+            string defaultPath = basePath + "/" + DefaultPostAction;
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post};
+            if (!_autoroutes.ContainsKey(rkeyDefault))
+            {
+                RouteParameters rParam = new RouteParameters();
+                rParam.EntityType = givenType;
+                rParam.Handler = Handler.GetRequestDelegate("PostHandler",
+                                                            new Type[] { typeof(T), givenType },
+                                                            this,
+                                                            new object[] { DatabaseType, _connectionString, interactingType, _jsonOptions });
+                _autoroutes.Add(rkeyDefault, rParam);
+                LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
+            }
+        }
         private void ProcessType (Type givenType)
         {
             if (givenType.IsClass)
@@ -96,36 +147,10 @@ namespace AutoController
                 MapToControllerAttribute r = (MapToControllerAttribute)givenType.GetCustomAttribute(MapToControllerAttributeType);
                 if (r != null)
                 {
-                    string routeName = String.IsNullOrWhiteSpace(_routePrefix) ? String.Empty : _routePrefix + "/";
-                    routeName += String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
-                    string collectionName = r.CollectionName;
-                    routeName +="/" +r.DefaultGetAction ;
-                    string routeNameWithPage = routeName;
-                    if (r.ItemsPerPage > 0) // no infinite scroll
-                    {
-                        routeNameWithPage +="/{page?}" ;
-                        RouteKey rkeyWithPage = new RouteKey() { Path = routeNameWithPage, HttpMethod = HttpMethod.Get};
-                        if (!_autoroutes.ContainsKey(rkeyWithPage))
-                        {
-                            RouteParameters rParam = new RouteParameters();
-                            rParam.EntityType = givenType;
-                            rParam.ItemsPerPage = r.ItemsPerPage;
-                            rParam.Handler = Handler.GetRequestDelegate("GetHandlerPage",
-                                                                        new Type[] {typeof(T), givenType},
-                                                                        this,
-                                                                        r.InteractingType,
-                                                                        new object[] {DatabaseType, _connectionString,(uint)20,r.ItemsPerPage});
-                            _autoroutes.Add(rkeyWithPage, rParam);
-                            LogInformation(String.Format("Add route {0} for {1}", rkeyWithPage, givenType));
-                        }
-                    }
-                    RouteKey rkey = new RouteKey() { Path = routeName, HttpMethod = HttpMethod.Get};
-                    if (!_autoroutes.ContainsKey(rkey))
-                    {
-                        _autoroutes.Add(rkey,new RouteParameters() { EntityType = givenType, ItemsPerPage = r.ItemsPerPage});
-                        LogInformation(String.Format("Add route {0} for {1}", rkey, givenType));
-                        AddRoutesForProperties(givenType, routeName, r.ItemsPerPage);
-                    }
+                    InteractingType usedInteractingType = _defaultInteractingType == null ? r.InteractingType : (InteractingType)_defaultInteractingType;
+                    string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
+                    AddGetRoutesForEntity( controllerName, r.DefaultGetAction, givenType, usedInteractingType);
+                    AddPostRouteForEntity( controllerName, "Save", givenType, usedInteractingType);
                 }
             }
             if (givenType.IsGenericType)
@@ -143,16 +168,25 @@ namespace AutoController
         /// <param name="routePrefix">Prefix segment for controller</param>
         /// <param name="databaseType">Database type for DBContext</param>
         /// <param name="connectionString">Database connection string</param>
-        public void GetAutoControllers( string routePrefix, DatabaseTypes databaseType, string connectionString)
+        /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
+        public void GetAutoControllers(
+            string routePrefix,
+            DatabaseTypes databaseType,
+            string connectionString,
+            InteractingType? interactingType,
+            JsonSerializerOptions jsonSerializerOptions = null)
         {
             _connectionString = connectionString;
             DatabaseType = databaseType;
             _routePrefix = routePrefix;
-            ProcessType (typeof(T));
+            _defaultInteractingType = interactingType;
+            _jsonOptions = jsonSerializerOptions;
+            _startRoutePath = String.IsNullOrWhiteSpace(_routePrefix) ? String.Empty : _routePrefix + "/";
+            ProcessType(typeof(T));
             PropertyInfo[] p = typeof(T).GetProperties();
             foreach (PropertyInfo t in p)
             {
-                ProcessType (t.PropertyType);
+                ProcessType(t.PropertyType);
             }
         }
     }

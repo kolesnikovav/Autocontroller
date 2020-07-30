@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -37,5 +38,13 @@ namespace AutoController
         /// Use logger for autocontroller
         /// </summary>
         bool LogInformation {get;set;}
+        /// <summary>
+        /// Interacting Type for autocontrolles
+        /// </summary>
+        InteractingType? InteractingType {get;set;}
+        /// <summary>
+        /// Options for json serialization and deserialization
+        /// </summary>
+        JsonSerializerOptions JsonSerializerOptions {get;set;}
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,7 +39,13 @@ namespace webapi
                 app.UseDeveloperExceptionPage();
             }
             string connStr = Configuration.GetConnectionString("DefaultConnection");
-            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr);
+            var JsonOptions = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr, InteractingType.JSON, JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("api2", true, DatabaseTypes.SQLite, connStr, InteractingType.XML);
+            app.UseAutoController<ApplicationDBContext>("api3", true, DatabaseTypes.SQLite, connStr, null, JsonOptions);
 
             app.UseRouting();
 
