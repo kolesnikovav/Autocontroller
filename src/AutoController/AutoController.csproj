@@ -12,15 +12,14 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
+    <Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller for each entity</Title>
     <Description>The Asp Net Core plugin for use with Entity Framework Core.
     This plugin simplify client-server interacting, by creating autocontroller for each Entity in your DBContext.
     JSON and XML interacting types are supported.
     Supported databases:
-    <ul>
-    <li>SQLite</li>
-    <li>SQLServer</li>
-    <li>PostgreSQL</li>
-     </ul>
+      SQLite
+      SQLServer
+      PostgreSQL
     </Description>
   </PropertyGroup>
 
