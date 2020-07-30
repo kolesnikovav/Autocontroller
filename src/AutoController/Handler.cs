@@ -78,7 +78,14 @@ namespace AutoController
                     {
                         if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
                         {
-                            queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
+                            if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                            {
+                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).ToList<TE>();
+                            }
+                            else
+                            {
+                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
+                            }
                         }
                         else
                         {
@@ -89,7 +96,14 @@ namespace AutoController
                     {
                         if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
                         {
-                            queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                            if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                            {
+                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                            }
+                            else
+                            {
+                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                            }
                         }
                         else
                         {

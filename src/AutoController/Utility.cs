@@ -36,5 +36,11 @@ namespace AutoController
         {
             return source.OrderBy(GetExpression<TSource>(propertyName));
         }
+        //OrderByDescending overload
+        public static IOrderedQueryable<TSource>
+        OrderByDescending<TSource>(this IQueryable<TSource> source, string propertyName)
+        {
+            return source.OrderByDescending(GetExpression<TSource>(propertyName));
+        }
     }
 }
