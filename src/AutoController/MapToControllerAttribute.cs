@@ -14,10 +14,6 @@ namespace AutoController
         /// </summary>
         public string ControllerName { get; set; }
         /// <summary>
-        /// DBSet property name for access elements collection
-        /// </summary>
-        public string CollectionName { get; set; }
-        /// <summary>
         /// Discribe interacting method for controller
         /// </summary>
         public InteractingType InteractingType { get; set; }
@@ -26,14 +22,18 @@ namespace AutoController
         /// </summary>
         public uint ItemsPerPage { get; set; } = 0;
         /// <summary>
+        /// Allow anauthorized access for obtaining data
+        /// </summary>
+        public bool AllowAnonimus { get; set; } = true;
+        /// <summary>
         /// Constructor with specified controller name
         /// </summary>
-        public MapToControllerAttribute(string controllerName, string collectionName, InteractingType iType, uint itemsPerPage = 0)
+        public MapToControllerAttribute(string controllerName, InteractingType iType, uint itemsPerPage = 0, bool allowAnonimus = true)
         {
             ControllerName = controllerName;
-            CollectionName = collectionName;
             InteractingType = iType;
             ItemsPerPage = itemsPerPage;
+            AllowAnonimus = allowAnonimus;
         }
     }
 }

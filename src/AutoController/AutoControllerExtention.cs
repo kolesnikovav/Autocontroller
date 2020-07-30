@@ -54,6 +54,8 @@ namespace AutoController
         /// <param name="databaseType">The type of your database</param>
         /// <param name="connectionString">Database connection string</param>
         /// <param name="interactingType">Interacting type</param>
+        /// <param name="authentificationPath">Application authentification path</param>
+        /// <param name="accessDeniedPath">Application access denied page path</param>
         /// <param name="jsonOptions">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
@@ -70,6 +72,8 @@ namespace AutoController
             DatabaseTypes databaseType,
             string connectionString,
             InteractingType? interactingType,
+            string authentificationPath,
+            string accessDeniedPath,
             JsonSerializerOptions jsonOptions = null,
             string DefaultGetAction = "Index",
             string DefaultGetCountAction = "Count",
@@ -96,6 +100,8 @@ namespace AutoController
                 databaseType,
                 connectionString,
                 interactingType,
+                authentificationPath,
+                accessDeniedPath,
                 jsonOptions);
             foreach(var route in autoRouter._autoroutes)
             {
@@ -119,6 +125,8 @@ namespace AutoController
              options.DatabaseType,
              options.ConnectionString,
              options.InteractingType,
+             options.AuthentificationPath,
+             options.AccessDeniedPath,
              options.JsonSerializerOptions,
              options.DefaultGetAction,
              options.DefaultGetCountAction,

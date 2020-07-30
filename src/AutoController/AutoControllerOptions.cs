@@ -65,6 +65,14 @@ namespace AutoController
         /// </summary>
         public JsonSerializerOptions JsonSerializerOptions {get;set;}
         /// <summary>
+        /// Autentification page path
+        /// </summary>
+        public string AuthentificationPath {get;set;}
+        /// <summary>
+        /// Access denied page path
+        /// </summary>
+        public string  AccessDeniedPath {get;set;}
+        /// <summary>
         /// Parameterless constructor
         /// </summary>
         public AutoControllerOptions() {}

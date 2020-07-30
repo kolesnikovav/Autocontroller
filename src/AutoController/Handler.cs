@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Text;
 
 using System.Xml.Serialization;
@@ -29,15 +30,50 @@ namespace AutoController
             stream.Position = 0;
             return stream;
         }
+        private static bool Authorization(HttpContext context,
+                                                bool allowAnonimus,
+                                                string authentificationPath,
+                                                string accessDeniedPath)
+        {
+            if (allowAnonimus) return true;
+            if (!context.User.Identity.IsAuthenticated)
+            {
+                context.Response.Redirect(authentificationPath);
+                if (!context.User.Identity.IsAuthenticated)
+                {
+                    context.Response.Redirect(authentificationPath);
+                    return false;
+                }
+            }
+            return true;
+
+        }
         private static RequestDelegate GetHandler<T, TE>(
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
+            bool allowAnonimus,
+            string authentificationPath,
+            string accessDeniedPath,
             JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
                                                                 where TE : class
         {
             return async (context) =>
             {
+                // if (!allowAnonimus && !context.User.Identity.IsAuthenticated)
+                // {
+                //     context.Response.Redirect(authentificationPath);
+                //     if (!context.User.Identity.IsAuthenticated)
+                //     {
+                //         await context.Response.WriteAsync("Unauthorized access not allowed");
+                //         return;
+                //     }
+                // }
+                bool authResult = Authorization(context, allowAnonimus,authentificationPath,accessDeniedPath);
+                if (!authResult)
+                {
+                    return;
+                }
                 uint pageSize = 0;
                 uint pageNumber = 0;
                 var RequestParams = context.Request.Query;
@@ -83,11 +119,19 @@ namespace AutoController
                 }
             };
         }
-        private static RequestDelegate GetCountOf<T, TE>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
-                                                                                                 where TE : class
+        private static RequestDelegate GetCountOf<T, TE>(DatabaseTypes dbType,
+                                                         string connString,
+                                                         bool allowAnonimus,
+                                                         string authentificationPath,
+                                                         string accessDeniedPath) where T : DbContext, IDisposable
+                                                                                  where TE : class
         {
             return async (context) =>
             {
+                if (!allowAnonimus && !context.User.Identity.IsAuthenticated)
+                {
+                    context.Response.Redirect(authentificationPath);
+                }
                 int queryResult;
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
@@ -102,6 +146,8 @@ namespace AutoController
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
+            string authentificationPath,
+            string accessDeniedPath,
             JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
                                                                 where TE : class
         {
