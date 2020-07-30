@@ -43,9 +43,9 @@ namespace webapi
             {
                 WriteIndented = true
             };
-            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr, InteractingType.JSON, JsonOptions);
-            app.UseAutoController<ApplicationDBContext>("api2", true, DatabaseTypes.SQLite, connStr, InteractingType.XML);
-            app.UseAutoController<ApplicationDBContext>("api3", true, DatabaseTypes.SQLite, connStr, null, JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr, InteractingType.JSON, "/login","/anauthorized",JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("api2", true, DatabaseTypes.SQLite, connStr, InteractingType.XML, "/login","/anauthorized");
+            app.UseAutoController<ApplicationDBContext>("api3", true, DatabaseTypes.SQLite, connStr, null, "/login","/anauthorized");
 
             app.UseRouting();
 
@@ -54,6 +54,14 @@ namespace webapi
                 endpoints.MapGet("/", async context =>
                 {
                     await context.Response.WriteAsync("Hello World!");
+                });
+                endpoints.MapGet("/login", async context =>
+                {
+                    await context.Response.WriteAsync("Login page");
+                });
+                endpoints.MapGet("/anauthorized", async context =>
+                {
+                    await context.Response.WriteAsync("Access Denied page");
                 });
             });
         }

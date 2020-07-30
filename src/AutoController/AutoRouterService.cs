@@ -74,6 +74,8 @@ namespace AutoController
         private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
         private Type  KeyAttributeType  = typeof(KeyAttribute);
         private string  _connectionString;
+        private string  _authentificationPath;
+        private string  _accessDeniedPath;
         private  string _defaultGetAction;
         private  string _defaultGetCountAction;
         private  string _defaultPostAction;
@@ -135,7 +137,7 @@ namespace AutoController
                 }
             }
         }
-        private void AddGetRoutesForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        private void AddGetRoutesForEntity( string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
         {
             string basePath = _startRoutePath + controllerName;
             string countPath = basePath + "/" + _defaultGetCountAction;
@@ -149,7 +151,13 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("GetHandler",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType, _connectionString, interactingType, _jsonOptions });
+                                                            new object[] { DatabaseType,
+                                                             _connectionString,
+                                                              interactingType,
+                                                              allowAnonimus,
+                                                              _authentificationPath,
+                                                              _accessDeniedPath,
+                                                             _jsonOptions });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -160,7 +168,11 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("GetCountOf",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType, _connectionString });
+                                                            new object[] { DatabaseType,
+                                                            _connectionString,
+                                                            allowAnonimus,
+                                                            _authentificationPath,
+                                                            _accessDeniedPath });
                 _autoroutes.Add(rkeyCount, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
             }
@@ -177,7 +189,12 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("PostHandler",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType, _connectionString, interactingType, _jsonOptions });
+                                                            new object[] { DatabaseType,
+                                                                          _connectionString,
+                                                                          interactingType,
+                                                                          _authentificationPath,
+                                                                          _accessDeniedPath,
+                                                                          _jsonOptions });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -191,7 +208,7 @@ namespace AutoController
                 {
                     InteractingType usedInteractingType = _defaultInteractingType == null ? r.InteractingType : (InteractingType)_defaultInteractingType;
                     string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
-                    AddGetRoutesForEntity( controllerName, givenType, usedInteractingType);
+                    AddGetRoutesForEntity( controllerName, givenType, usedInteractingType, r.AllowAnonimus);
                     AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
                 }
             }
@@ -211,8 +228,10 @@ namespace AutoController
         /// <param name="databaseType">Database type for DBContext</param>
         /// <param name="connectionString">Database connection string</param>
         /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
-        /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
         /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
+        /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
+        /// <param name="authentificationPath">Autentification page path</param>
+        /// <param name="accessDeniedPath">Access denied page path</param>
         /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
@@ -225,6 +244,8 @@ namespace AutoController
             DatabaseTypes databaseType,
             string connectionString,
             InteractingType? interactingType,
+            string authentificationPath,
+            string accessDeniedPath,
             JsonSerializerOptions jsonSerializerOptions = null,
             string DefaultGetAction = "Index",
             string DefaultGetCountAction = "Count",
@@ -239,6 +260,8 @@ namespace AutoController
             DatabaseType = databaseType;
             _routePrefix = routePrefix;
             _defaultInteractingType = interactingType;
+            _authentificationPath = authentificationPath;
+            _accessDeniedPath = accessDeniedPath;
             _jsonOptions = jsonSerializerOptions;
             _defaultGetAction = DefaultGetAction;
             _defaultGetCountAction = DefaultGetCountAction;

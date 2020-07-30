@@ -72,5 +72,13 @@ namespace AutoController
         /// Options for json serialization and deserialization
         /// </summary>
         JsonSerializerOptions JsonSerializerOptions {get;set;}
+        /// <summary>
+        /// Authentification page path
+        /// </summary>
+        string AuthentificationPath {get;set;}
+        /// <summary>
+        /// Access denied page path
+        /// </summary>
+        string  AccessDeniedPath {get;set;}
     }
 }
