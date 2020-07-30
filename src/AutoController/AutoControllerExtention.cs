@@ -15,6 +15,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AutoController
 {
+    /// <summary>
+    /// IApplicationBuilder extention for creating Autocotrollers
+    ///
+    /// </summary>
     public static class AutoControllerExtention
     {
         private const string LogCategoryName = "AutoController";
@@ -22,7 +26,7 @@ namespace AutoController
         /// Adds AutoController as singletone service and register it in Dependency Injection
         ///
         /// </summary>
-        /// <param name="<T>">The type of DBContext/>.</param>
+        /// <typeparam name="T">The type of your DBContext/>.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/>.</param>
         public static void AddAutoController<T>(this IServiceCollection services) where T: DbContext
         {
@@ -43,13 +47,13 @@ namespace AutoController
         /// Adds autocontroller for DBContext.
         ///
         /// </summary>
-        /// <param name=<T>The DBContext derived type</param>
-        /// <param name="appBuilder">The <see cref="ApplicationBuilder"/>.</param>
-        /// <param name="relatedType">The type to be creating for controller</param>
+        /// <typeparam name="T">The DBContext derived type</typeparam>
+        /// <param name="appBuilder">The instance of ApplicationBuilder</param>
         /// <param name="routePrefix">start prefix for route</param>
         /// <param name="useLogging">log information for route</param>
         /// <param name="databaseType">The type of your database</param>
         /// <param name="connectionString">Database connection string</param>
+        /// <param name="interactingType">Interacting type</param>
         /// <param name="jsonOptions">Sets the JsonSerializerOptions</param>
         public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,
@@ -80,8 +84,8 @@ namespace AutoController
         /// Adds autocontroller for DBContext.
         ///
         /// </summary>
-        /// <param name=<T>The DBContext derived type</param>
-        /// <param name="appBuilder">The <see cref="ApplicationBuilder"/>.</param>
+        /// <typeparam name="T">The DBContext derived type</typeparam>
+        /// <param name="appBuilder">The ApplicationBuilder instance</param>
         /// <param name="options">Options for autocontroller</param>
         public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,

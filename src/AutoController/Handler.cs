@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Text;
 
 using System.Xml.Serialization;
 using System.IO;
@@ -18,6 +19,15 @@ namespace AutoController
             if (dbType == DatabaseTypes.SQLite) return SQLiteProvider<T>.GetBuilder(connString);
             if (dbType == DatabaseTypes.SQLServer) return SQLServerProvider<T>.GetBuilder(connString);
             return PostgresProvider<T>.GetBuilder(connString);
+        }
+        private static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
         private static RequestDelegate GetHandler<T, TE>(
             DatabaseTypes dbType,
@@ -58,10 +68,6 @@ namespace AutoController
                 if (interactingType == InteractingType.JSON)
                 {
                     byte[] jsonUtf8Bytes;
-                    // var options = new JsonSerializerOptions
-                    // {
-                    //     WriteIndented = true
-                    // };
                     jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, jsonSerializerOptions);
                     await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
                 }
@@ -118,36 +124,34 @@ namespace AutoController
                                 dbcontext.Set<TE>().Add(recivedData);
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
-                                // var options = new JsonSerializerOptions
-                                // {
-                                //     WriteIndented = true
-                                // };
                                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
                                 await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }
                             // Do something
                         }
-                        // int Length = (int)context.Request.Body.Length;
-                        // byte[] b = new byte[Length];
-                        // var res = System.Text.Encoding.UTF8.GetString(b, 0, (int)context.Request.Body.Length);
-                        // recivedData = JsonSerializer.Deserialize<TE>(res);
-                        // if (recivedData != null)
-                        // {
-                        //     dbcontext.Set<TE>().Add(recivedData);
-                        //     await dbcontext.SaveChangesAsync();
-                        //     await context.Response.WriteAsync("".ToString());
-                        //     byte[] jsonUtf8Bytes;
-                        //     var options = new JsonSerializerOptions
-                        //     {
-                        //         WriteIndented = true
-                        //     };
-                        //     jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, options);
-                        //     await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
-                        // }
                     }
-                    // queryResult = await dbcontext.Set<TE>().Add().FirstOrDefaultAsync();
-                    // context.Request.Body.Response.WriteAsync(queryResult.ToString());
+                    else if (interactingType == InteractingType.XML)
+                    {
+                        using (var reader = new StreamReader(context.Request.Body))
+                        {
+                            var body = await reader.ReadToEndAsync();
 
+                            Stream stream = GenerateStreamFromString(body);
+                            XmlRootAttribute a = new XmlRootAttribute("result");
+                            XmlSerializer serializer = new XmlSerializer(typeof(TE),a);
+                            recivedData = (TE)serializer.Deserialize(stream);
+                            await stream.DisposeAsync();
+                            if (recivedData != null)
+                            {
+                                dbcontext.Set<TE>().Add(recivedData);
+                                await dbcontext.SaveChangesAsync();
+                                byte[] jsonUtf8Bytes;
+                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
+                                await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                            }
+                            // Do something
+                        }
+                    }
                 }
             };
         }

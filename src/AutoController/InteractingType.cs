@@ -7,7 +7,13 @@ namespace AutoController
     /// </summary>
     public enum InteractingType
     {
+        /// <summary>
+        /// JSON interracting method
+        /// </summary>
         JSON,
+        /// <summary>
+        /// XML interracting method
+        /// </summary>
         XML
     }
 }

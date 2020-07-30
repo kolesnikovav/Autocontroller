@@ -14,7 +14,7 @@ namespace AutoController
         /// </summary>
         public string ControllerName { get; set; }
         /// <summary>
-        /// DBSet<T> property name for access elements collection
+        /// DBSet property name for access elements collection
         /// </summary>
         public string CollectionName { get; set; }
         /// <summary>

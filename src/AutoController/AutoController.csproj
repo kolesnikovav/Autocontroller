@@ -2,6 +2,26 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackageId>AutoController</PackageId>
+    <Version>1.0.0-alpha</Version>
+    <Authors>Aleksandr Kolesnikov</Authors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>AutoController</AssemblyName>
+    <PackageTags>asp-net-core;entity-framework;CRUD;controller</PackageTags>
+    <PackageProjectUrl>https://github.com/kolesnikovav/Autocontroller</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
+    <Description>The Asp Net Core plugin for use with Entity Framework Core.
+    This plugin simplify client-server interacting, by creating autocontroller for each Entity in your DBContext.
+    JSON and XML interacting types are supported.
+    Supported databases:
+    <ul>
+    <li>SQLite</li>
+    <li>SQLServer</li>
+    <li>PostgreSQL</li>
+     </ul>
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

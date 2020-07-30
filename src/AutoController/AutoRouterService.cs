@@ -13,10 +13,22 @@ using System.Net.Http;
 
 namespace AutoController
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class RouteKey
     {
-        public string Path {get;set;}
-        public HttpMethod HttpMethod {get;set;}
+        /// <summary>
+        ///
+        /// </summary>
+        public string Path { get; set; }
+        /// <summary>
+        ///
+        /// </summary>
+        public HttpMethod HttpMethod { get; set; }
+        /// <summary>
+        ///
+        /// </summary>
 
         public override string ToString()
         {
@@ -24,15 +36,33 @@ namespace AutoController
         }
 
     }
+    /// <summary>
+    ///
+    /// </summary>
     public class RouteParameters
     {
-        public Type EntityType {get;set;}
-        public uint ItemsPerPage {get;set;}
-        public RequestDelegate Handler {get;set;}
+        /// <summary>
+        ///
+        /// </summary>
+        public Type EntityType { get; set; }
+        /// <summary>
+        ///
+        /// </summary>
+        public uint ItemsPerPage { get; set; }
+        /// <summary>
+        ///
+        /// </summary>
+        public RequestDelegate Handler { get; set; }
     }
+    /// <summary>
+    /// Service that handle requests for Entityes
+    /// </summary>
 
     public class AutoRouterService<T> where T: DbContext, IDisposable
     {
+        /// <summary>
+        ///
+        /// </summary>
         public Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
         private string _routePrefix;
         private string _startRoutePath;
@@ -50,6 +80,9 @@ namespace AutoController
                 logger.LogInformation(message);
             }
         }
+        /// <summary>
+        /// Database type for autocontroller
+        /// </summary>
         public DatabaseTypes DatabaseType {get;set;}
         /// <summary>
         /// Attach to logger.
@@ -169,6 +202,7 @@ namespace AutoController
         /// <param name="databaseType">Database type for DBContext</param>
         /// <param name="connectionString">Database connection string</param>
         /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
+        /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
         public void GetAutoControllers(
             string routePrefix,
             DatabaseTypes databaseType,
