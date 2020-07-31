@@ -6,9 +6,14 @@ using System.Linq.Expressions;
 
 namespace AutoController
 {
+    /// <summary>
+    /// Utility
+    /// </summary>
     public static class Utility
     {
-        //makes expression for specific prop
+        /// <summary>
+        ///makes expression for specific prop
+        /// </summary>
         public static Expression<Func<TSource, object>> GetExpression<TSource>(string propertyName)
         {
             var param = Expression.Parameter(typeof(TSource), "x");
@@ -16,27 +21,32 @@ namespace AutoController
             (param, propertyName), typeof(object));   //important to use the Expression.Convert
             return Expression.Lambda<Func<TSource, object>>(conversion, param);
         }
-
-        //makes deleget for specific prop
+        /// <summary>
+        ///makes deleget for specific prop
+        /// </summary>
         public static Func<TSource, object> GetFunc<TSource>(string propertyName)
         {
             return GetExpression<TSource>(propertyName).Compile();  //only need compiled expression
         }
-
-        //OrderBy overload
+        /// <summary>
+        ///OrderBy overload
+        /// </summary>
         public static IOrderedEnumerable<TSource>
         OrderBy<TSource>(this IEnumerable<TSource> source, string propertyName)
         {
             return source.OrderBy(GetFunc<TSource>(propertyName));
         }
-
-        //OrderBy overload
+        /// <summary>
+        ///OrderBy overload
+        /// </summary>
         public static IOrderedQueryable<TSource>
         OrderBy<TSource>(this IQueryable<TSource> source, string propertyName)
         {
             return source.OrderBy(GetExpression<TSource>(propertyName));
         }
-        //OrderByDescending overload
+        /// <summary>
+        ///OrderByDescending overload
+        /// </summary>
         public static IOrderedQueryable<TSource>
         OrderByDescending<TSource>(this IQueryable<TSource> source, string propertyName)
         {
