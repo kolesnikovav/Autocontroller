@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using System.Text;
 
 using System.Xml.Serialization;
 using System.IO;
+using System.Net.Http;
 
 namespace AutoController
 {
@@ -31,12 +33,16 @@ namespace AutoController
             stream.Position = 0;
             return stream;
         }
-        private static bool Authorization(HttpContext context,
+        private static bool Authorization<TE>(HttpContext context,
+                                                HttpMethod requestMethod,
+                                                Dictionary<string,List<AuthorizeAttribute>> restrictions,
                                                 bool allowAnonimus,
                                                 string authentificationPath,
                                                 string accessDeniedPath)
         {
-            if (allowAnonimus) return true;
+            if (allowAnonimus && context.Request.Method == HttpMethods.Get) return true;
+            string AKey = AccessHelper.GetAccessKey(typeof(TE), null,requestMethod);
+            if (!restrictions.ContainsKey(AKey)) return true; // no restrictions!
             if (!context.User.Identity.IsAuthenticated)
             {
                 context.Response.Redirect(authentificationPath);
@@ -49,6 +55,7 @@ namespace AutoController
             return true;
         }
         private static RequestDelegate GetHandler<T, TE>(
+            Dictionary<string,List<AuthorizeAttribute>> restrictions,
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
@@ -61,7 +68,7 @@ namespace AutoController
         {
             return async (context) =>
             {
-                bool authResult = Authorization(context, allowAnonimus,authentificationPath,accessDeniedPath);
+                bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus,authentificationPath,accessDeniedPath);
                 if (!authResult)
                 {
                     return;
@@ -129,7 +136,8 @@ namespace AutoController
                 }
             };
         }
-        private static RequestDelegate GetCountOf<T, TE>(DatabaseTypes dbType,
+        private static RequestDelegate GetCountOf<T, TE>(Dictionary<string,List<AuthorizeAttribute>> restrictions,
+                                                         DatabaseTypes dbType,
                                                          string connString,
                                                          bool allowAnonimus,
                                                          string authentificationPath,
@@ -139,7 +147,7 @@ namespace AutoController
         {
             return async (context) =>
             {
-                bool authResult = Authorization(context, allowAnonimus,authentificationPath,accessDeniedPath);
+                bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus,authentificationPath,accessDeniedPath);
                 if (!authResult)
                 {
                     return;
@@ -156,6 +164,7 @@ namespace AutoController
             };
         }
         private static RequestDelegate PostHandler<T, TE>(
+            Dictionary<string,List<AuthorizeAttribute>> restrictions,
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
@@ -166,6 +175,11 @@ namespace AutoController
         {
             return async (context) =>
             {
+                bool authResult = Authorization<TE>(context, HttpMethod.Post, restrictions, false,authentificationPath,accessDeniedPath);
+                if (!authResult)
+                {
+                    return;
+                }
                 TE recivedData;
                 List<TE> recivedDataList;
 
@@ -238,6 +252,7 @@ namespace AutoController
             };
         }
         private static RequestDelegate DeleteHandler<T, TE>(
+            Dictionary<string,List<AuthorizeAttribute>> restrictions,
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
@@ -248,6 +263,11 @@ namespace AutoController
         {
             return async (context) =>
             {
+                bool authResult = Authorization<TE>(context, HttpMethod.Delete, restrictions, false,authentificationPath,accessDeniedPath);
+                if (!authResult)
+                {
+                    return;
+                }
                 TE recivedData;
                 List<TE> recivedDataList;
 

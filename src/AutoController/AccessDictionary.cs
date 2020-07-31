@@ -1,34 +1,21 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using System.Text.Json;
-using System.Text;
-
-using System.Xml.Serialization;
-using System.IO;
+using System.Net.Http;
 
 namespace AutoController
 {
     /// <summary>
-    /// Decribe access rights keys
+    /// Helper class for access rights keys
     /// </summary>
-    public class AccessKey
+    public static class AccessHelper
     {
-        /// <summary>
-        /// Decribe access key for user
-        /// </summary>
-        public IdentityUser User { get; set; }
-        /// <summary>
-        /// Decribe access key for role
-        /// </summary>
-        public IdentityRole Role { get; set; }
+    /// <summary>
+    /// Retrive string access permition key
+    /// </summary>
+        public static string GetAccessKey(Type givenType, PropertyInfo property, HttpMethod method)
+        {
+            string p = (property == null) ? "null" : property.ToString();
+            return givenType.ToString() + p + method.ToString();
+        }
     }
 }

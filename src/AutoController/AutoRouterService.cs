@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,6 @@ namespace AutoController
         {
             return HttpMethod.ToString() + " " + Path;
         }
-
     }
     /// <summary>
     /// Route parameter for handling request
@@ -65,6 +65,9 @@ namespace AutoController
         /// The Dictionary with all used routes
         /// </summary>
         public Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+
+        private readonly Dictionary<string,List<AuthorizeAttribute>> Restrictions =
+                       new Dictionary<string, List<AuthorizeAttribute>>();
         private string _routePrefix;
         private string _startRoutePath;
         private InteractingType?  _defaultInteractingType;
@@ -72,6 +75,9 @@ namespace AutoController
         private Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
         private ILogger logger;
         private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
+        private Type GetRestictionAttributeType = typeof(GetRestictionAttribute);
+        private Type PostRestictionAttributeType = typeof(PostRestictionAttribute);
+        private Type DeleteRestictionAttributeType = typeof(DeleteRestictionAttribute);
         private Type  KeyAttributeType  = typeof(KeyAttribute);
         private string  _connectionString;
         private string  _authentificationPath;
@@ -139,8 +145,70 @@ namespace AutoController
                 }
             }
         }
+        private void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
+        {
+            string AKey = AccessHelper.GetAccessKey(givenType, null, httpMethod);
+            var restrictionsGet = givenType.GetCustomAttributes(GetRestictionAttributeType);
+            var restrictionsPost = givenType.GetCustomAttributes(PostRestictionAttributeType);
+            var restrictionsDelete = givenType.GetCustomAttributes(DeleteRestictionAttributeType);
+            if (restrictionsGet.Count() > 0)
+            {
+                if (!Restrictions.ContainsKey(AKey))
+                {
+                    Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                    foreach (var r in restrictionsGet)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+                else
+                {
+                    foreach (var r in restrictionsGet)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+            }
+            else if (restrictionsPost.Count() > 0 && httpMethod == HttpMethod.Post)
+            {
+                if (!Restrictions.ContainsKey(AKey))
+                {
+                    Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                    foreach (var r in restrictionsPost)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+                else
+                {
+                    foreach (var r in restrictionsPost)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+            }
+            else if (restrictionsDelete.Count() > 0 && httpMethod == HttpMethod.Delete)
+            {
+                if (!Restrictions.ContainsKey(AKey))
+                {
+                    Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                    foreach (var r in restrictionsDelete)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+                else
+                {
+                    foreach (var r in restrictionsDelete)
+                    {
+                        Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    }
+                }
+            }
+        }
         private void AddGetRoutesForEntity( string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
         {
+            ProccessRestrictions( givenType, HttpMethod.Get);
             string basePath = _startRoutePath + controllerName;
             string countPath = basePath + "/" + _defaultGetCountAction;
             string defaultPath = basePath + "/" + _defaultGetAction;
@@ -153,7 +221,9 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("GetHandler",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType,
+                                                            new object[] {
+                                                                Restrictions,
+                                                                DatabaseType,
                                                              _connectionString,
                                                               interactingType,
                                                               allowAnonimus,
@@ -171,7 +241,9 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("GetCountOf",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType,
+                                                            new object[] {
+                                                                Restrictions,
+                                                                DatabaseType,
                                                             _connectionString,
                                                             allowAnonimus,
                                                             _authentificationPath,
@@ -183,6 +255,7 @@ namespace AutoController
         }
         private void AddPostRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
         {
+            ProccessRestrictions( givenType, HttpMethod.Post);
             string basePath = _startRoutePath + controllerName;
             string defaultPath = basePath + "/" + _defaultPostAction;
             RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post};
@@ -193,7 +266,9 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("PostHandler",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType,
+                                                            new object[] {
+                                                                          Restrictions,
+                                                                          DatabaseType,
                                                                           _connectionString,
                                                                           interactingType,
                                                                           _authentificationPath,
@@ -205,6 +280,7 @@ namespace AutoController
         }
         private void AddDeleteRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
         {
+            ProccessRestrictions( givenType, HttpMethod.Delete);
             string basePath = _startRoutePath + controllerName;
             string defaultPath = basePath + "/" + _defaultDeleteAction;
             RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete};
@@ -215,7 +291,9 @@ namespace AutoController
                 rParam.Handler = Handler.GetRequestDelegate("DeleteHandler",
                                                             new Type[] { typeof(T), givenType },
                                                             this,
-                                                            new object[] { DatabaseType,
+                                                            new object[] {
+                                                                          Restrictions,
+                                                                          DatabaseType,
                                                                           _connectionString,
                                                                           interactingType,
                                                                           _authentificationPath,
