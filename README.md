@@ -37,6 +37,9 @@ Database supported:
 
 ## How to use
 Install package via nugget
+```
+dotnet add package AutoController
+```
 
 Change your Startup.cs configuration file as follows:
 ```cs
