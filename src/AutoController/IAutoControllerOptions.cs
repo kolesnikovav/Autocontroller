@@ -53,6 +53,10 @@ namespace AutoController
         /// </summary>
         string DefaultPostAction {get;set;}
         /// <summary>
+        ///
+        /// </summary>
+        string DefaultDeleteAction {get;set;}
+        /// <summary>
         /// Database type for DBContext
         /// </summary>
         DatabaseTypes DatabaseType {get;set;}

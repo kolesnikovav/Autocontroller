@@ -79,6 +79,7 @@ namespace AutoController
         private  string _defaultGetAction;
         private  string _defaultGetCountAction;
         private  string _defaultPostAction;
+        private  string _defaultDeleteAction;
         private  string _defaultFilterParameter;
         private  string _defaultSortParameter;
         private string _defaultSortDirectionParameter;
@@ -202,6 +203,28 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
         }
+        private void AddDeleteRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        {
+            string basePath = _startRoutePath + controllerName;
+            string defaultPath = basePath + "/" + _defaultDeleteAction;
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete};
+            if (!_autoroutes.ContainsKey(rkeyDefault))
+            {
+                RouteParameters rParam = new RouteParameters();
+                rParam.EntityType = givenType;
+                rParam.Handler = Handler.GetRequestDelegate("DeleteHandler",
+                                                            new Type[] { typeof(T), givenType },
+                                                            this,
+                                                            new object[] { DatabaseType,
+                                                                          _connectionString,
+                                                                          interactingType,
+                                                                          _authentificationPath,
+                                                                          _accessDeniedPath,
+                                                                          _jsonOptions });
+                _autoroutes.Add(rkeyDefault, rParam);
+                LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
+            }
+        }
         private void ProcessType (Type givenType)
         {
             if (givenType.IsClass)
@@ -213,6 +236,7 @@ namespace AutoController
                     string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
                     AddGetRoutesForEntity( controllerName, givenType, usedInteractingType, r.AllowAnonimus);
                     AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
+                    AddDeleteRouteForEntity( controllerName, givenType, usedInteractingType);
                 }
             }
             if (givenType.IsGenericType)
@@ -237,6 +261,7 @@ namespace AutoController
         /// <param name="accessDeniedPath">Access denied page path</param>
         /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultDeleteAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
@@ -253,6 +278,7 @@ namespace AutoController
             string DefaultGetAction = "Index",
             string DefaultGetCountAction = "Count",
             string DefaultPostAction = "Save",
+            string DefaultDeleteAction = "Delete",
             string DefaultFilterParameter = "filter",
             string DefaultSortParameter = "sort",
             string DefaultSortDirectionParameter = "sortdirection",
@@ -269,6 +295,7 @@ namespace AutoController
             _defaultGetAction = DefaultGetAction;
             _defaultGetCountAction = DefaultGetCountAction;
             _defaultPostAction = DefaultPostAction;
+            _defaultDeleteAction = DefaultDeleteAction;
             _defaultFilterParameter = DefaultFilterParameter;
             _defaultSortParameter = DefaultSortParameter;
             _defaultSortDirectionParameter = DefaultSortDirectionParameter;

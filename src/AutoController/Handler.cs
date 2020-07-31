@@ -237,6 +237,82 @@ namespace AutoController
                 }
             };
         }
+        private static RequestDelegate DeleteHandler<T, TE>(
+            DatabaseTypes dbType,
+            string connString,
+            InteractingType interactingType,
+            string authentificationPath,
+            string accessDeniedPath,
+            JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
+                                                                where TE : class
+        {
+            return async (context) =>
+            {
+                TE recivedData;
+                List<TE> recivedDataList;
+
+                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+                Type t = typeof(T);
+                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+                {
+                    if (interactingType == InteractingType.JSON)
+                    {
+                        using (var reader = new StreamReader(context.Request.Body))
+                        {
+                            var body = await reader.ReadToEndAsync();
+                            try
+                            {
+                                recivedData = JsonSerializer.Deserialize<TE>(body);
+                                if (recivedData != null)
+                                {
+                                    dbcontext.Set<TE>().Remove(recivedData);
+                                    await dbcontext.SaveChangesAsync();
+                                    await context.Response.WriteAsync("Deleted");
+                                }
+                            }
+                            catch
+                            {
+                                // It can be array
+                                try
+                                {
+                                    recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                                    if (recivedDataList != null)
+                                    {
+                                        dbcontext.Set<TE>().RemoveRange(recivedDataList);
+                                        await dbcontext.SaveChangesAsync();
+                                        await context.Response.WriteAsync("Deleted");
+                                    }
+                                }
+                                catch
+                                {
+
+                                }
+                            }
+                        }
+                    }
+                    else if (interactingType == InteractingType.XML)
+                    {
+                        using (var reader = new StreamReader(context.Request.Body))
+                        {
+                            var body = await reader.ReadToEndAsync();
+
+                            Stream stream = GenerateStreamFromString(body);
+                            XmlRootAttribute a = new XmlRootAttribute("result");
+                            XmlSerializer serializer = new XmlSerializer(typeof(TE),a);
+                            recivedData = (TE)serializer.Deserialize(stream);
+                            await stream.DisposeAsync();
+                            if (recivedData != null)
+                            {
+                                dbcontext.Set<TE>().Remove(recivedData);
+                                await dbcontext.SaveChangesAsync();
+                                await context.Response.WriteAsync("Deleted");
+                            }
+                            // Do something
+                        }
+                    }
+                }
+            };
+        }
         private static MethodInfo GetGenericMethod(string name, Type[] types)
         {
             MethodInfo mi = typeof(Handler).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where( v => v.Name == name).FirstOrDefault();

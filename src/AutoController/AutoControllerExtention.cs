@@ -60,6 +60,7 @@ namespace AutoController
         /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultDeleteAction">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
         /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
@@ -78,6 +79,7 @@ namespace AutoController
             string DefaultGetAction = "Index",
             string DefaultGetCountAction = "Count",
             string DefaultPostAction = "Save",
+            string DefaultDeleteAction = "Delete",
             string DefaultFilterParameter = "filter",
             string DefaultSortParameter = "sort",
             string DefaultSortDirectionParameter = "sortdirection",
@@ -131,6 +133,7 @@ namespace AutoController
              options.DefaultGetAction,
              options.DefaultGetCountAction,
              options.DefaultPostAction,
+             options.DefaultDeleteAction,
              options.DefaultFilterParameter,
              options.DefaultSortParameter,
              options.DefaultSortDirectionParameter,

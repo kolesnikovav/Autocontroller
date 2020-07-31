@@ -45,6 +45,10 @@ namespace AutoController
         /// </summary>
         public string DefaultPostAction {get;set;} = "Save";
         /// <summary>
+        ///
+        /// </summary>
+        public string DefaultDeleteAction {get;set;} = "Delete";
+        /// <summary>
         /// Database type for DBContext
         /// </summary>
         public DatabaseTypes DatabaseType {get;set;}
