@@ -8,7 +8,7 @@ namespace AutoController
     /// Inherited from AuthorizeAttribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Class , AllowMultiple = true, Inherited = true)]
-    public class DeleteRestictionAttribute: AuthorizeAttribute
+    public class DeleteRestrictionAttribute: AuthorizeAttribute
     {
 
     }

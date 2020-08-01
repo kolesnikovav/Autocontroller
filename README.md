@@ -60,12 +60,12 @@ These attributes inherits from Authorize attribute and woks the same.
 It can be combined
 ```cs
 // GET access restriction
-[GetRestiction(Roles = "Administrator")]
+[GetRestriction(Roles = "Administrator")]
 // POST access restriction
 // user must have Administrator role
-[PostRestiction(Roles = "Administrator")]
+[PostRestriction(Roles = "Administrator")]
 // DELETE access restriction
-[DeleteRestiction(Roles = "Administrator")]
+[DeleteRestriction(Roles = "Administrator")]
 ```
 
 Change your Startup.cs configuration file as follows:

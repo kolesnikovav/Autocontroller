@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi
 {
     [MapToController("Blogs",InteractingType.JSON,25,false)]
-    [PostRestiction(Roles = "Administrator")]
+    [PostRestriction(Roles = "Administrator")]
     public class Blog
     {
         [Key]

@@ -8,7 +8,7 @@ namespace AutoController
     /// Inherited from AuthorizeAttribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-    public class PostRestictionAttribute: AuthorizeAttribute
+    public class PostRestrictionAttribute: AuthorizeAttribute
     {
 
     }

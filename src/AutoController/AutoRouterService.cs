@@ -75,9 +75,9 @@ namespace AutoController
         private Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
         private ILogger logger;
         private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
-        private Type GetRestictionAttributeType = typeof(GetRestictionAttribute);
-        private Type PostRestictionAttributeType = typeof(PostRestictionAttribute);
-        private Type DeleteRestictionAttributeType = typeof(DeleteRestictionAttribute);
+        private Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
+        private Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
+        private Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
         private Type  KeyAttributeType  = typeof(KeyAttribute);
         private string  _connectionString;
         private string  _authentificationPath;
@@ -337,14 +337,14 @@ namespace AutoController
         /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
         /// <param name="authentificationPath">Autentification page path</param>
         /// <param name="accessDeniedPath">Access denied page path</param>
-        /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultDeleteAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultPageParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultItemsPerPageParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultGetCountAction">Sets the Route path for GetCount action. Default = Count</param>
+        /// <param name="DefaultPostAction">Sets the the Route path for Save data via POST Request. Default = Save</param>
+        /// <param name="DefaultDeleteAction">Sets the the Route path for Delete items via DELETE Request. Default = Delete</param>
+        /// <param name="DefaultFilterParameter">Sets the parameter name wich describe filter expression. Default = filter</param>
+        /// <param name="DefaultSortParameter">Sets the parameter name wich describe field to sort result. Default = sort</param>
+        /// <param name="DefaultSortDirectionParameter">Sets the parameter name wich describe sortdirection. Default = sortdirection</param>
+        /// <param name="DefaultPageParameter">Sets the parameter name of page number. Default = page</param>
+        /// <param name="DefaultItemsPerPageParameter">Sets the parameter name of page size. Default = size</param>
         public void GetAutoControllers(
             string routePrefix,
             DatabaseTypes databaseType,
