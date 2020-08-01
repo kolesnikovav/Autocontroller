@@ -2,6 +2,9 @@
 <a href="https://www.nuget.org/packages/AutoController">
     <img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/Autocontroller">
 </a>
+<a href="https://www.nuget.org/packages/AutoController">
+    <img alt="Nuget" src="https://img.shields.io/nuget/dt/AutoController">
+</a>
 
 Automaticly create REST API Controllers for given types.
 This project is designed for use with Entity Framework Core.
