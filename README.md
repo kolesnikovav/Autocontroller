@@ -40,6 +40,30 @@ Install package via nugget
 ```
 dotnet add package AutoController
 ```
+Mark your entity type as a member of AutoController by using Attribute
+```cs
+[MapToController(
+    // name & adress of controller
+    "Blogs",
+    // interacting type
+    InteractingType.JSON,
+    // default pagesize
+    25,
+    // AllowAnonimus true by default
+    false)]
+```
+Create some restrictions, if needed
+These attributes inherits from Authorize attribute and woks the same.
+It can be combined
+```cs
+// GET access restriction
+[GetRestiction(Roles = "Administrator")]
+// POST access restriction
+// user must have Administrator role
+[PostRestiction(Roles = "Administrator")]
+// DELETE access restriction
+[DeleteRestiction(Roles = "Administrator")]
+```
 
 Change your Startup.cs configuration file as follows:
 ```cs
@@ -74,4 +98,19 @@ using AutoController;
         }
     }
 ```
+When Your Application has been started, You can see these responses:
+
+GET Requests
+https://localhost:5001/api/Blogs/Index - JSON Result
+https://localhost:5001/apixml/Blogs/Index - XML Result
+
+https://localhost:5001/api/Blogs/Index?page=1&size=5 - JSON Result with first 5 items
+https://localhost:5001/api/Blogs/Index?page=1&size=5&sort=Content - JSON Result with first 5 items, ordered by Content
+
+POST Requests
+https://localhost:5001/api/Blogs/Save - Save Blog into Your Database. Blog will be recived from request body
+
+DELETE Requests
+https://localhost:5001/api/Blogs/Delete - Remove Blog from Your Database. Blog will be recived from request body
+
 
