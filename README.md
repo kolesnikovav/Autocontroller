@@ -125,4 +125,24 @@ https://localhost:5001/api/Blogs/Save - Save Blog into Your Database. Blog will 
 DELETE Requests
 https://localhost:5001/api/Blogs/Delete - Remove Blog from Your Database. Blog will be recived from request body
 
+## Handle some actions before save object:
+
+With your Entity type, where it's nessesary, You can implement interface
+The method DoBeforeSave has been called before save object.
+It returns true when object can be saved or false, when not.
+It returns reason text with responce.
+```cs
+    /// <summary>
+    /// Implement this interface in your entity types
+    /// </summary>
+    public interface IActionBeforeSave<T> where T:DbContext
+    {
+        /// <summary>
+        /// Do something before save
+        /// </summary>
+        /// <param name="dbcontext">DbContext</param>
+        /// <param name="reason">The reason why the object cannot be saved</param>
+        public bool DoBeforeSave(T dbcontext, out string reason);
+    }
+```
 
