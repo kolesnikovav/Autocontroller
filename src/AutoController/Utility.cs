@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Dynamic;
+using System.Linq.Dynamic;
 
 namespace AutoController
 {
@@ -52,20 +54,32 @@ namespace AutoController
         {
             return source.OrderByDescending(GetExpression<TSource>(propertyName));
         }
-        public static Func<TSource, bool> GetPredicate<TSource>(string propertyName)
+        /// <summary>
+        ///Emty predicate with returns allways true
+        /// </summary>
+        public static Func<TSource, bool> GetEmptyPredicate<TSource>()
         {
-            var signs = new string[] {"=", "<=", ">=", "<", ">", "<>", "!="};
+            ConstantExpression constant= Expression.Constant(true, typeof(bool));
             var param = Expression.Parameter(typeof(TSource), "x");
-            Expression conversion = Expression.Convert(Expression.Property
-            (param, propertyName), typeof(object));   //important to use the Expression.Convert
-            return Expression.Lambda<Func<TSource, bool>>(conversion, param).Compile();
+            return Expression.Lambda<Func<TSource, bool>>(constant,param).Compile();
+        }
+        /// <summary>
+        ///Create predicate from qurey string using System.Linq.Dynamic.Core
+        /// </summary>
+        public static Func<TSource, bool> GetPredicate<TSource>(string expressionString)
+        {
+            var param = Expression.Parameter(typeof(TSource), "x");
+            var e = new System.Linq.Dynamic.Core.Parser.ExpressionParser(new ParameterExpression[] {param},expressionString,null,null);
+            var parsedExpr = e.Parse(typeof(bool));
+            return Expression.Lambda<Func<TSource, bool>>(parsedExpr, param).Compile();
         }
         /// <summary>
         ///Where overload
         /// </summary>
-        public static IEnumerable<TSource> Where<TSource> (this IEnumerable<TSource> source, string expression)
+        public static IQueryable<TSource> Where<TSource> (this IQueryable<TSource> source, string expression)
         {
-            return source.Where<TSource>(GetPredicate<TSource>(expression));
+            var p = (String.IsNullOrWhiteSpace(expression)) ? GetEmptyPredicate<TSource>() : GetPredicate<TSource>(expression);
+            return source.Where<TSource>(p).AsQueryable();
         }
     }
 }

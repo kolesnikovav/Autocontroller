@@ -13,6 +13,7 @@ using System.Text;
 using System.Xml.Serialization;
 using System.IO;
 using System.Net.Http;
+using System.Linq.Dynamic;
 
 namespace AutoController
 {
@@ -70,16 +71,16 @@ namespace AutoController
                 {
                     if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).ToList<TE>();
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).ToList<TE>();
                     }
                     else
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort).ToList<TE>();
                     }
                 }
                 else
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).ToList<TE>();
                 }
             }
             else
@@ -88,16 +89,16 @@ namespace AutoController
                 {
                     if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
                     }
                     else
                     {
-                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
                     }
                 }
                 else
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
                 }
             }
             return queryResult;

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PackageId>AutoController</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Aleksandr Kolesnikov</Authors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>AutoController</AssemblyName>
@@ -19,7 +19,7 @@
     JSON and XML interacting types are supported.
     Handles GET POST DELETE requests.
     Flexible and adjustable request schema.
-    Support sorting and pagination in GET Requests
+    Support sorting, filtering and pagination in GET Requests
     Supported databases:
       SQLite
       SQLServer
@@ -35,6 +35,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.6" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.0" />
   </ItemGroup>
 
 </Project>

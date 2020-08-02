@@ -110,6 +110,15 @@ https://localhost:5001/apixml/Blogs/Index - XML Result
 https://localhost:5001/api/Blogs/Index?page=1&size=5 - JSON Result with first 5 items
 https://localhost:5001/api/Blogs/Index?page=1&size=5&sort=Content - JSON Result with first 5 items, ordered by Content
 
+Filtering results:
+for filtering results, the library
+https://dynamic-linq.net/
+has been used.
+https://localhost:5001/api/Blogs/Index?filter=id = 1 - JSON Result with item with id = 1
+https://localhost:5001/api/Blogs/Index?filter=Content!=null and Subject !=null - JSON Result with items with fiter conditions
+
+
+
 POST Requests
 https://localhost:5001/api/Blogs/Save - Save Blog into Your Database. Blog will be recived from request body
 
