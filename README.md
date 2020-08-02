@@ -17,8 +17,8 @@ CRUD actions becomes more easy!
 <li>Sorting results</li>
 <li>Interacting type can be JSON or XML</li>
 <li>Flexible and adjustable request/response schema</li>
-<li>(TODO) Filtering result</li>
-<li>(TODO) Authentificated Access and Permitions Control</li>
+<li>Filtering results</li>
+<li>Authentificated Access and Permitions Control</li>
 <li>(TODO) Execute some Actions before save/delete</li>
 </ul>
 

@@ -19,6 +19,10 @@ namespace AutoController
 {
     internal static class Handler
     {
+        private static MethodInfo GetActionBeforeSave<TE>() where TE: class
+        {
+            return typeof(TE).GetMethod("DoBeforeSave");
+        }
         private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
         {
             if (dbType == DatabaseTypes.SQLite) return SQLiteProvider<T>.GetBuilder(connString);
@@ -212,26 +216,65 @@ namespace AutoController
                                 recivedData = JsonSerializer.Deserialize<TE>(body);
                                 if (recivedData != null)
                                 {
-                                    dbcontext.Set<TE>().Add(recivedData);
-                                    await dbcontext.SaveChangesAsync();
-                                    byte[] jsonUtf8Bytes;
-                                    jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
-                                    await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                    //*****
+                                    bool IsAllowedFofSave = true;
+                                    string Reason = "";
+                                    var mi = GetActionBeforeSave<TE>();
+                                    if (mi != null)
+                                    {
+                                        object[] p = new object[] {dbcontext, Reason};
+                                        IsAllowedFofSave = (bool)mi.Invoke(recivedData, p);
+                                        Reason = (string)p[1];
+                                    }
+                                    //*****
+                                    if (IsAllowedFofSave)
+                                    {
+                                        dbcontext.Set<TE>().Add(recivedData);
+                                        await dbcontext.SaveChangesAsync();
+                                        byte[] jsonUtf8Bytes;
+                                        jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
+                                        await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                    }
+                                    else
+                                    {
+                                        await context.Response.WriteAsync(Reason);
+                                    }
                                 }
                             }
                             catch
                             {
-                                // It can be array
                                 try
                                 {
                                     recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
                                     if (recivedDataList != null)
                                     {
-                                        dbcontext.Set<TE>().AddRange(recivedDataList);
-                                        await dbcontext.SaveChangesAsync();
-                                        byte[] jsonUtf8Bytes;
-                                        jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
-                                        await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+
+                                        //*****
+                                        bool IsAllowedFofSave = true;
+                                        string Reason = "";
+                                        var mi = GetActionBeforeSave<TE>();
+                                        if (mi != null)
+                                        {
+                                            object[] p = new object[] { dbcontext, Reason };
+                                            foreach (var subject in recivedDataList)
+                                            {
+                                                IsAllowedFofSave = IsAllowedFofSave && (bool)mi.Invoke(subject, p);
+                                                Reason += (string)p[1] + "\n";
+                                            }
+                                        }
+                                        //*****
+                                        if (!IsAllowedFofSave)
+                                        {
+                                            await context.Response.WriteAsync(Reason);
+                                        }
+                                        else
+                                        {
+                                            dbcontext.Set<TE>().AddRange(recivedDataList);
+                                            await dbcontext.SaveChangesAsync();
+                                            byte[] jsonUtf8Bytes;
+                                            jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
+                                            await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                        }
                                     }
                                 }
                                 catch
