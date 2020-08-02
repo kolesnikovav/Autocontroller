@@ -52,5 +52,20 @@ namespace AutoController
         {
             return source.OrderByDescending(GetExpression<TSource>(propertyName));
         }
+        public static Func<TSource, bool> GetPredicate<TSource>(string propertyName)
+        {
+            var signs = new string[] {"=", "<=", ">=", "<", ">", "<>", "!="};
+            var param = Expression.Parameter(typeof(TSource), "x");
+            Expression conversion = Expression.Convert(Expression.Property
+            (param, propertyName), typeof(object));   //important to use the Expression.Convert
+            return Expression.Lambda<Func<TSource, bool>>(conversion, param).Compile();
+        }
+        /// <summary>
+        ///Where overload
+        /// </summary>
+        public static IEnumerable<TSource> Where<TSource> (this IEnumerable<TSource> source, string expression)
+        {
+            return source.Where<TSource>(GetPredicate<TSource>(expression));
+        }
     }
 }

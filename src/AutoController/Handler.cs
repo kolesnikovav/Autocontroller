@@ -59,8 +59,52 @@ namespace AutoController
             }
             return true;
         }
+        private static IEnumerable<TE> GetDBQueryResult<T, TE>(T dbcontext, UserRequestParams QueryParams) where T : DbContext, IDisposable
+                                                                                                          where TE : class
+        {
+            IEnumerable<TE> queryResult;
+            int skip = (int)((QueryParams.pageNumber - 1) * QueryParams.pageSize);
+            if (QueryParams.pageSize == 0)
+            {
+                if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+                {
+                    if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                    {
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).ToList<TE>();
+                    }
+                    else
+                    {
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
+                    }
+                }
+                else
+                {
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
+                }
+            }
+            else
+            {
+                if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+                {
+                    if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                    {
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                    }
+                    else
+                    {
+                        queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                    }
+                }
+                else
+                {
+                    queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                }
+            }
+            return queryResult;
+        }
         private static RequestDelegate GetHandler<T, TE>(
             Dictionary<string,List<AuthorizeAttribute>> restrictions,
+            Dictionary<Type, EntityKeyDescribtion> entityKeys,
             DatabaseTypes dbType,
             string connString,
             InteractingType interactingType,
@@ -78,50 +122,14 @@ namespace AutoController
                 {
                     return;
                 }
+                var e = entityKeys;
                 var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
-                int skip = (int)((QueryParams.pageNumber - 1) * QueryParams.pageSize);
-
                 IEnumerable<TE> queryResult;
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
                 using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
                 {
-                    if (QueryParams.pageSize == 0)
-                    {
-                        if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
-                        {
-                            if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
-                            {
-                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).ToList<TE>();
-                            }
-                            else
-                            {
-                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).ToList<TE>();
-                            }
-                        }
-                        else
-                        {
-                            queryResult = dbcontext.Set<TE>().AsNoTracking().ToList<TE>();
-                        }
-                    }
-                    else
-                    {
-                        if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
-                        {
-                            if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
-                            {
-                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
-                            }
-                            else
-                            {
-                                queryResult = dbcontext.Set<TE>().AsNoTracking().OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
-                            }
-                        }
-                        else
-                        {
-                            queryResult = dbcontext.Set<TE>().AsNoTracking().Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
-                        }
-                    }
+                    queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
                 }
                 if (interactingType == InteractingType.JSON)
                 {
@@ -142,6 +150,7 @@ namespace AutoController
             };
         }
         private static RequestDelegate GetCountOf<T, TE>(Dictionary<string,List<AuthorizeAttribute>> restrictions,
+                                                         Dictionary<Type, EntityKeyDescribtion> entityKeys,
                                                          DatabaseTypes dbType,
                                                          string connString,
                                                          bool allowAnonimus,

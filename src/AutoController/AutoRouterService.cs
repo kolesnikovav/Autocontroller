@@ -64,10 +64,12 @@ namespace AutoController
         /// <summary>
         /// The Dictionary with all used routes
         /// </summary>
-        public Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+        public readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
 
         private readonly Dictionary<string,List<AuthorizeAttribute>> Restrictions =
                        new Dictionary<string, List<AuthorizeAttribute>>();
+        private readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
+                       new Dictionary<Type, EntityKeyDescribtion>();
         private string _routePrefix;
         private string _startRoutePath;
         private InteractingType?  _defaultInteractingType;
@@ -133,6 +135,7 @@ namespace AutoController
                 }
                 if (k != null)
                 {
+                    EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType});
                     string r = String.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
                     string route = routeClassName + "/{" + r +"}";
                     //"{controller}/{action}/{property}"
@@ -223,6 +226,7 @@ namespace AutoController
                                                             this,
                                                             new object[] {
                                                                 Restrictions,
+                                                                EntityKeys,
                                                                 DatabaseType,
                                                              _connectionString,
                                                               interactingType,
@@ -243,6 +247,7 @@ namespace AutoController
                                                             this,
                                                             new object[] {
                                                                 Restrictions,
+                                                                EntityKeys,
                                                                 DatabaseType,
                                                             _connectionString,
                                                             allowAnonimus,
@@ -315,6 +320,7 @@ namespace AutoController
                     AddGetRoutesForEntity( controllerName, givenType, usedInteractingType, r.AllowAnonimus);
                     AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
                     AddDeleteRouteForEntity( controllerName, givenType, usedInteractingType);
+                    //AddRoutesForProperties( givenType, controllerName, (uint)0);
                 }
             }
             if (givenType.IsGenericType)
@@ -322,6 +328,28 @@ namespace AutoController
                 foreach (Type currentType in givenType.GetGenericArguments())
                 {
                     ProcessType (currentType);
+                }
+            }
+        }
+        private void RetriveEntityKeys(Type givenType)
+        {
+            if (givenType.IsClass)
+            {
+                PropertyInfo[] p = givenType.GetProperties();
+                foreach (PropertyInfo t in p)
+                {
+                    KeyAttribute k = t.GetCustomAttribute(KeyAttributeType) as KeyAttribute;
+                    if (k != null)
+                    {
+                        EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = t.Name, KeyType = t.PropertyType });
+                    }
+                }
+            }
+            if (givenType.IsGenericType)
+            {
+                foreach (Type currentType in givenType.GetGenericArguments())
+                {
+                    RetriveEntityKeys(currentType);
                 }
             }
         }
@@ -387,8 +415,13 @@ namespace AutoController
                 _defaultSortParameter,
                 _defaultSortDirectionParameter
             );
-            ProcessType(typeof(T));
+            // found keys of entity for filering results
+
             PropertyInfo[] p = typeof(T).GetProperties();
+            foreach (PropertyInfo t in p)
+            {
+                RetriveEntityKeys(t.PropertyType);
+            }
             foreach (PropertyInfo t in p)
             {
                 ProcessType(t.PropertyType);
