@@ -32,9 +32,20 @@ namespace AutoController
         {
             services.AddSingleton(typeof(AutoRouterService<T>));
         }
-        private static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T: DbContext
+        /// <summary>
+        /// Retrives  AutoRouterService service for external use.
+        ///
+        /// </summary>
+        /// <typeparam name="T">The type of your DBContext/>.</typeparam>
+        /// <param name="builder">The applicaton builder</param>
+        public static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T: DbContext
         {
-            return (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>));
+            var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>));
+            if (service == null)
+            {
+                throw(new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
+            }
+            return service;
         }
         private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
         {
@@ -57,15 +68,16 @@ namespace AutoController
         /// <param name="authentificationPath">Application authentification path</param>
         /// <param name="accessDeniedPath">Application access denied page path</param>
         /// <param name="jsonOptions">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultGetCountAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultPostAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultDeleteAction">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultFilterParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultSortParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultSortDirectionParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultPageParameter">Sets the JsonSerializerOptions</param>
-        /// <param name="DefaultItemsPerPageParameter">Sets the JsonSerializerOptions</param>
+        /// <param name="DefaultGetAction">The action path of default GET request. Default = Index</param>
+        /// <param name="DefaultGetCountAction">The action path of default Count GET request. Default = Count</param>
+        /// <param name="DefaultPostAction">The action path of default POST request. Default = Save</param>
+        /// <param name="DefaultDeleteAction">The action path of default DELETE request. Default = Delete</param>
+        /// <param name="DefaultFilterParameter">default = filter</param>
+        /// <param name="DefaultSortParameter">default = sort</param>
+        /// <param name="DefaultSortDirectionParameter">default = sortdirection</param>
+        /// <param name="DefaultPageParameter">default = page</param>
+        /// <param name="DefaultItemsPerPageParameter">default = size</param>
+        /// <param name="DefaultUpdateAction">The action path of default PUT request. Default = Update</param>
         public static void UseAutoController<T>(
             this IApplicationBuilder appBuilder,
             string routePrefix,
@@ -84,7 +96,8 @@ namespace AutoController
             string DefaultSortParameter = "sort",
             string DefaultSortDirectionParameter = "sortdirection",
             string DefaultPageParameter = "page",
-            string DefaultItemsPerPageParameter = "size"
+            string DefaultItemsPerPageParameter = "size",
+            string DefaultUpdateAction = "Update"
             ) where T: DbContext
         {
             if (appBuilder == null)
@@ -104,8 +117,18 @@ namespace AutoController
                 interactingType,
                 authentificationPath,
                 accessDeniedPath,
-                jsonOptions);
-            foreach(var route in autoRouter._autoroutes)
+                jsonOptions,
+                DefaultGetAction,
+                DefaultGetCountAction,
+                DefaultPostAction,
+                DefaultDeleteAction,
+                DefaultFilterParameter,
+                DefaultSortParameter,
+                DefaultSortDirectionParameter,
+                DefaultPageParameter,
+                DefaultItemsPerPageParameter,
+                DefaultUpdateAction);
+            foreach(var route in autoRouter.Autoroutes)
             {
                 AddRoute(appBuilder, route.Key, route.Value);
             }
@@ -138,7 +161,8 @@ namespace AutoController
              options.DefaultSortParameter,
              options.DefaultSortDirectionParameter,
              options.DefaultPageParameter,
-             options.DefaultItemsPerPageParameter);
+             options.DefaultItemsPerPageParameter,
+             options.DefaultUpdateAction);
         }
         private static ILogger GetOrCreateLogger(
             IApplicationBuilder appBuilder,

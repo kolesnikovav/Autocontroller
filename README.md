@@ -27,6 +27,7 @@ Routers and handlers for paths will be created:
 <li>"/Your Entity/Index" GET</li>
 <li>"/Your Entity/Count" GET</li>
 <li>"/Your Entity/Save" POST</li>
+<li>"/Your Entity/Update" PUT</li>
 <li>"/Your Entity/Delete" DELETE</li>
 </ul>
 Interacting type can be JSON or XML.
@@ -122,14 +123,18 @@ https://localhost:5001/api/Blogs/Index?filter=Content!=null and Subject !=null -
 POST Requests
 https://localhost:5001/api/Blogs/Save - Save Blog into Your Database. Blog will be recived from request body
 
+PUT Requests
+https://localhost:5001/api/Blogs/Update - Update Blog into Your Database. Blog will be recived from request body
+
 DELETE Requests
 https://localhost:5001/api/Blogs/Delete - Remove Blog from Your Database. Blog will be recived from request body
 
-## Handle some actions before save and delete object:
+## Handle some actions before save,  and delete object:
 
 When You need do something before save and delete objects, You can implement interfaces
 The method DoBeforeSave has been called before save object.
 It returns true when object can be saved and deleted or false, when not.
+Save and update requests and restrictions works the same.
 It returns reason text with responce.
 ```cs
     /// <summary>

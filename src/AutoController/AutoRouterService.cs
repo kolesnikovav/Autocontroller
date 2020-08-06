@@ -64,7 +64,42 @@ namespace AutoController
         /// <summary>
         /// The Dictionary with all used routes
         /// </summary>
-        public readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+        private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+
+        /// <summary>
+        /// The Dictionary with all used routes
+        /// </summary>
+        public Dictionary<RouteKey, RouteParameters> Autoroutes
+        {
+            get => this._autoroutes;
+        }
+        /// <summary>
+        /// Returns current options for external use
+        /// </summary>
+        public IAutoControllerOptions Options
+        {
+            get
+            {
+                return new AutoControllerOptions()
+                {
+                    AccessDeniedPath = _accessDeniedPath,
+                    AuthentificationPath = _authentificationPath,
+                    RoutePrefix = _routePrefix,
+                    DefaultGetAction = _defaultGetAction,
+                    DefaultGetCountAction = _defaultGetCountAction,
+                    DefaultPostAction = _defaultPostAction,
+                    DefaultDeleteAction = _defaultDeleteAction,
+                    DefaultUpdateAction = _defaultUpdateAction,
+                    DefaultFilterParameter = _defaultFilterParameter,
+                    DefaultPageParameter = _defaultPageParameter,
+                    DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
+                    DefaultSortParameter = _defaultSortParameter,
+                    DefaultSortDirectionParameter = _defaultSortDirectionParameter,
+                    InteractingType = _defaultInteractingType,
+                    JsonSerializerOptions = _jsonOptions
+                };
+            }
+        }
 
         private readonly Dictionary<string,List<AuthorizeAttribute>> Restrictions =
                        new Dictionary<string, List<AuthorizeAttribute>>();
@@ -88,6 +123,7 @@ namespace AutoController
         private  string _defaultGetCountAction;
         private  string _defaultPostAction;
         private  string _defaultDeleteAction;
+        private  string _defaultUpdateAction;
         private  string _defaultFilterParameter;
         private  string _defaultSortParameter;
         private string _defaultSortDirectionParameter;
@@ -272,6 +308,7 @@ namespace AutoController
                                                             new Type[] { typeof(T), givenType },
                                                             this,
                                                             new object[] {
+                                                                          false,
                                                                           Restrictions,
                                                                           DatabaseType,
                                                                           _connectionString,
@@ -308,6 +345,32 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
         }
+        private void AddUpdateRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        {
+            //ProccessRestrictions( givenType, HttpMethod.Post);
+            string basePath = _startRoutePath + controllerName;
+            string defaultPath = basePath + "/" + _defaultUpdateAction;
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Put};
+            if (!_autoroutes.ContainsKey(rkeyDefault))
+            {
+                RouteParameters rParam = new RouteParameters();
+                rParam.EntityType = givenType;
+                rParam.Handler = Handler.GetRequestDelegate("PostHandler",
+                                                            new Type[] { typeof(T), givenType },
+                                                            this,
+                                                            new object[] {
+                                                                          true,
+                                                                          Restrictions,
+                                                                          DatabaseType,
+                                                                          _connectionString,
+                                                                          interactingType,
+                                                                          _authentificationPath,
+                                                                          _accessDeniedPath,
+                                                                          _jsonOptions });
+                _autoroutes.Add(rkeyDefault, rParam);
+                LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
+            }
+        }
         private void ProcessType (Type givenType)
         {
             if (givenType.IsClass)
@@ -320,6 +383,7 @@ namespace AutoController
                     AddGetRoutesForEntity( controllerName, givenType, usedInteractingType, r.AllowAnonimus);
                     AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
                     AddDeleteRouteForEntity( controllerName, givenType, usedInteractingType);
+                    AddUpdateRouteForEntity( controllerName, givenType, usedInteractingType);
                     //AddRoutesForProperties( givenType, controllerName, (uint)0);
                 }
             }
@@ -373,6 +437,7 @@ namespace AutoController
         /// <param name="DefaultSortDirectionParameter">Sets the parameter name wich describe sortdirection. Default = sortdirection</param>
         /// <param name="DefaultPageParameter">Sets the parameter name of page number. Default = page</param>
         /// <param name="DefaultItemsPerPageParameter">Sets the parameter name of page size. Default = size</param>
+        /// <param name="DefaultUpdateAction">Sets the the Route path for Update data via PUT Request. Default = Update</param>
         public void GetAutoControllers(
             string routePrefix,
             DatabaseTypes databaseType,
@@ -389,7 +454,8 @@ namespace AutoController
             string DefaultSortParameter = "sort",
             string DefaultSortDirectionParameter = "sortdirection",
             string DefaultPageParameter = "page",
-            string DefaultItemsPerPageParameter = "size")
+            string DefaultItemsPerPageParameter = "size",
+            string DefaultUpdateAction = "Update")
         {
             _connectionString = connectionString;
             DatabaseType = databaseType;
@@ -402,6 +468,7 @@ namespace AutoController
             _defaultGetCountAction = DefaultGetCountAction;
             _defaultPostAction = DefaultPostAction;
             _defaultDeleteAction = DefaultDeleteAction;
+            _defaultUpdateAction = DefaultUpdateAction;
             _defaultFilterParameter = DefaultFilterParameter;
             _defaultSortParameter = DefaultSortParameter;
             _defaultSortDirectionParameter = DefaultSortDirectionParameter;

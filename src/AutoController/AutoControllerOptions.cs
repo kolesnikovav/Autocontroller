@@ -47,6 +47,10 @@ namespace AutoController
         /// <summary>
         ///
         /// </summary>
+        public string DefaultUpdateAction {get;set;} = "Update";
+        /// <summary>
+        ///
+        /// </summary>
         public string DefaultDeleteAction {get;set;} = "Delete";
         /// <summary>
         /// Database type for DBContext

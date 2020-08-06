@@ -213,6 +213,7 @@ namespace AutoController
         }
 
         private static RequestDelegate PostHandler<T, TE>(
+            bool update,
             Dictionary<string,List<AuthorizeAttribute>> restrictions,
             DatabaseTypes dbType,
             string connString,
@@ -250,7 +251,14 @@ namespace AutoController
                                 {
                                     if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                                     {
-                                        dbcontext.Set<TE>().Add(recivedData);
+                                        if (!update)
+                                        {
+                                            dbcontext.Set<TE>().Add(recivedData);
+                                        }
+                                        else
+                                        {
+                                            dbcontext.Set<TE>().Update(recivedData);
+                                        }
                                         await dbcontext.SaveChangesAsync();
                                         byte[] jsonUtf8Bytes;
                                         jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
@@ -275,7 +283,14 @@ namespace AutoController
                                         }
                                         else
                                         {
-                                            dbcontext.Set<TE>().AddRange(recivedDataList);
+                                            if (!update)
+                                            {
+                                                dbcontext.Set<TE>().AddRange(recivedDataList);
+                                            }
+                                            else
+                                            {
+                                                dbcontext.Set<TE>().UpdateRange(recivedDataList);
+                                            }
                                             await dbcontext.SaveChangesAsync();
                                             byte[] jsonUtf8Bytes;
                                             jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
@@ -304,14 +319,21 @@ namespace AutoController
                             if (recivedDataL != null && recivedDataL.Count > 0)
                             {
                                     if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
+                                {
+                                    if (!update)
                                     {
                                         dbcontext.Set<TE>().AddRange(recivedDataL);
-                                        await dbcontext.SaveChangesAsync();
-                                        StringWriter textWriter = new StringWriter();
-                                        serializer.Serialize(textWriter,recivedDataL.ToList());
-                                        await context.Response.WriteAsync(textWriter.ToString());
-                                        await textWriter.DisposeAsync();
                                     }
+                                    else
+                                    {
+                                        dbcontext.Set<TE>().UpdateRange(recivedDataL);
+                                    }
+                                    await dbcontext.SaveChangesAsync();
+                                    StringWriter textWriter = new StringWriter();
+                                    serializer.Serialize(textWriter, recivedDataL.ToList());
+                                    await context.Response.WriteAsync(textWriter.ToString());
+                                    await textWriter.DisposeAsync();
+                                }
                                     else
                                     {
                                         await context.Response.WriteAsync(Reason);

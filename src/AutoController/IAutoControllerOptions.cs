@@ -21,11 +21,11 @@ namespace AutoController
         /// </summary>
         string RoutePrefix {get;set;}
         /// <summary>
-        ///
+        /// The action path of default GET request
         /// </summary>
         string DefaultGetAction {get;set;}
         /// <summary>
-        ///
+        /// The action path of default Count GET request
         /// </summary>
         string DefaultGetCountAction {get;set;}
         /// <summary>
@@ -56,6 +56,10 @@ namespace AutoController
         ///
         /// </summary>
         string DefaultDeleteAction {get;set;}
+        /// <summary>
+        ///
+        /// </summary>
+        string DefaultUpdateAction {get;set;}
         /// <summary>
         /// Database type for DBContext
         /// </summary>
