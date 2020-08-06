@@ -125,11 +125,11 @@ https://localhost:5001/api/Blogs/Save - Save Blog into Your Database. Blog will 
 DELETE Requests
 https://localhost:5001/api/Blogs/Delete - Remove Blog from Your Database. Blog will be recived from request body
 
-## Handle some actions before save object:
+## Handle some actions before save and delete object:
 
-With your Entity type, where it's nessesary, You can implement interface
+When You need do something before save and delete objects, You can implement interfaces
 The method DoBeforeSave has been called before save object.
-It returns true when object can be saved or false, when not.
+It returns true when object can be saved and deleted or false, when not.
 It returns reason text with responce.
 ```cs
     /// <summary>
@@ -143,6 +143,19 @@ It returns reason text with responce.
         /// <param name="dbcontext">DbContext</param>
         /// <param name="reason">The reason why the object cannot be saved</param>
         public bool DoBeforeSave(T dbcontext, out string reason);
+    }
+
+    /// <summary>
+    /// Implement this interface in your entity types
+    /// </summary>
+    public interface IActionBeforeDelete<T> where T:DbContext
+    {
+        /// <summary>
+        /// Do something before delete
+        /// </summary>
+        /// <param name="dbcontext">DbContext</param>
+        /// <param name="reason">The reason why the object cannot be removed</param>
+        public bool DoBeforeDelete(T dbcontext, out string reason);
     }
 ```
 

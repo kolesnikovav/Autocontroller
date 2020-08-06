@@ -1,11 +1,3 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using System.Net.Http;
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoController

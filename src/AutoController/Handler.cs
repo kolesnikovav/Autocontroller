@@ -23,6 +23,10 @@ namespace AutoController
         {
             return typeof(TE).GetMethod("DoBeforeSave");
         }
+        private static MethodInfo GetActionBeforeDelete<TE>() where TE: class
+        {
+            return typeof(TE).GetMethod("DoBeforeDelete");
+        }
         private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
         {
             if (dbType == DatabaseTypes.SQLite) return SQLiteProvider<T>.GetBuilder(connString);
@@ -182,6 +186,32 @@ namespace AutoController
                 await context.Response.WriteAsync(queryResult.ToString());
             };
         }
+        private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
+                                                                                                          where TE : class
+        {
+            reason = "";
+            bool result = true;
+            if (methodInfo == null) return result;
+            object[] p = new object[] {dbcontext, reason};
+            result = (bool)methodInfo.Invoke(recivedObject, p);
+            reason += (string)p[1];
+            return result;
+        }
+        private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
+                                                                                                          where TE : class
+        {
+            reason = "";
+            bool result = true;
+            if (methodInfo == null) return result;
+            object[] p = new object[] {dbcontext, reason};
+            foreach( TE el in recivedObjects)
+            {
+                result = (bool)methodInfo.Invoke(el, p) && result;
+                reason += (string)p[1] + "\n";
+            }
+            return result;
+        }
+
         private static RequestDelegate PostHandler<T, TE>(
             Dictionary<string,List<AuthorizeAttribute>> restrictions,
             DatabaseTypes dbType,
@@ -201,6 +231,8 @@ namespace AutoController
                 }
                 TE recivedData;
                 List<TE> recivedDataList;
+                var mi = GetActionBeforeSave<TE>();
+                string Reason = "";
 
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
@@ -216,18 +248,7 @@ namespace AutoController
                                 recivedData = JsonSerializer.Deserialize<TE>(body);
                                 if (recivedData != null)
                                 {
-                                    //*****
-                                    bool IsAllowedFofSave = true;
-                                    string Reason = "";
-                                    var mi = GetActionBeforeSave<TE>();
-                                    if (mi != null)
-                                    {
-                                        object[] p = new object[] {dbcontext, Reason};
-                                        IsAllowedFofSave = (bool)mi.Invoke(recivedData, p);
-                                        Reason = (string)p[1];
-                                    }
-                                    //*****
-                                    if (IsAllowedFofSave)
+                                    if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                                     {
                                         dbcontext.Set<TE>().Add(recivedData);
                                         await dbcontext.SaveChangesAsync();
@@ -248,22 +269,7 @@ namespace AutoController
                                     recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
                                     if (recivedDataList != null)
                                     {
-
-                                        //*****
-                                        bool IsAllowedFofSave = true;
-                                        string Reason = "";
-                                        var mi = GetActionBeforeSave<TE>();
-                                        if (mi != null)
-                                        {
-                                            object[] p = new object[] { dbcontext, Reason };
-                                            foreach (var subject in recivedDataList)
-                                            {
-                                                IsAllowedFofSave = IsAllowedFofSave && (bool)mi.Invoke(subject, p);
-                                                Reason += (string)p[1] + "\n";
-                                            }
-                                        }
-                                        //*****
-                                        if (!IsAllowedFofSave)
+                                        if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
                                         {
                                             await context.Response.WriteAsync(Reason);
                                         }
@@ -292,16 +298,24 @@ namespace AutoController
 
                             Stream stream = GenerateStreamFromString(body);
                             XmlRootAttribute a = new XmlRootAttribute("result");
-                            XmlSerializer serializer = new XmlSerializer(typeof(TE),a);
-                            recivedData = (TE)serializer.Deserialize(stream);
+                            XmlSerializer serializer = new XmlSerializer(typeof(List<TE>),a);
+                            var recivedDataL = (List<TE>)serializer.Deserialize(stream);
                             await stream.DisposeAsync();
-                            if (recivedData != null)
+                            if (recivedDataL != null && recivedDataL.Count > 0)
                             {
-                                dbcontext.Set<TE>().Add(recivedData);
-                                await dbcontext.SaveChangesAsync();
-                                byte[] jsonUtf8Bytes;
-                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
-                                await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                    if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
+                                    {
+                                        dbcontext.Set<TE>().AddRange(recivedDataL);
+                                        await dbcontext.SaveChangesAsync();
+                                        StringWriter textWriter = new StringWriter();
+                                        serializer.Serialize(textWriter,recivedDataL.ToList());
+                                        await context.Response.WriteAsync(textWriter.ToString());
+                                        await textWriter.DisposeAsync();
+                                    }
+                                    else
+                                    {
+                                        await context.Response.WriteAsync(Reason);
+                                    }
                             }
                             // Do something
                         }
@@ -328,6 +342,8 @@ namespace AutoController
                 }
                 TE recivedData;
                 List<TE> recivedDataList;
+                var mi = GetActionBeforeDelete<TE>();
+                string Reason ="";
 
                 var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
                 Type t = typeof(T);
@@ -343,9 +359,16 @@ namespace AutoController
                                 recivedData = JsonSerializer.Deserialize<TE>(body);
                                 if (recivedData != null)
                                 {
-                                    dbcontext.Set<TE>().Remove(recivedData);
-                                    await dbcontext.SaveChangesAsync();
-                                    await context.Response.WriteAsync("Deleted");
+                                    if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
+                                    {
+                                        dbcontext.Set<TE>().Remove(recivedData);
+                                        await dbcontext.SaveChangesAsync();
+                                        await context.Response.WriteAsync("Deleted");
+                                    }
+                                    else
+                                    {
+                                        await context.Response.WriteAsync(Reason);
+                                    }
                                 }
                             }
                             catch
@@ -356,9 +379,16 @@ namespace AutoController
                                     recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
                                     if (recivedDataList != null)
                                     {
-                                        dbcontext.Set<TE>().RemoveRange(recivedDataList);
-                                        await dbcontext.SaveChangesAsync();
-                                        await context.Response.WriteAsync("Deleted");
+                                        if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                                        {
+                                            dbcontext.Set<TE>().RemoveRange(recivedDataList);
+                                            await dbcontext.SaveChangesAsync();
+                                            await context.Response.WriteAsync("Deleted");
+                                        }
+                                        else
+                                        {
+                                            await context.Response.WriteAsync(Reason);
+                                        }
                                     }
                                 }
                                 catch
@@ -376,14 +406,21 @@ namespace AutoController
 
                             Stream stream = GenerateStreamFromString(body);
                             XmlRootAttribute a = new XmlRootAttribute("result");
-                            XmlSerializer serializer = new XmlSerializer(typeof(TE),a);
-                            recivedData = (TE)serializer.Deserialize(stream);
+                            XmlSerializer serializer = new XmlSerializer(typeof(List<TE>),a);
+                            var recivedDataL = (List<TE>)serializer.Deserialize(stream);
                             await stream.DisposeAsync();
-                            if (recivedData != null)
+                            if (recivedDataL != null && recivedDataL.Count > 0)
                             {
-                                dbcontext.Set<TE>().Remove(recivedData);
-                                await dbcontext.SaveChangesAsync();
-                                await context.Response.WriteAsync("Deleted");
+                                if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
+                                {
+                                    dbcontext.Set<TE>().RemoveRange(recivedDataL);
+                                    await dbcontext.SaveChangesAsync();
+                                    await context.Response.WriteAsync("Deleted");
+                                }
+                                else
+                                {
+                                    await context.Response.WriteAsync(Reason);
+                                }
                             }
                             // Do something
                         }
