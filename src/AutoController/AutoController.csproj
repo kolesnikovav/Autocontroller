@@ -17,7 +17,7 @@
     <Description>The Asp Net Core plugin for use with Entity Framework Core.
     This plugin simplify client-server interacting, by creating autocontroller for each Entity in your DBContext.
     JSON and XML interacting types are supported.
-    Handles GET POST DELETE requests.
+    Handles GET POST PUT DELETE requests.
     Flexible and adjustable request schema.
     Support sorting, filtering and pagination in GET Requests.
     Retrive count of entity.
@@ -28,6 +28,7 @@
       SQLServer
       PostgreSQL
     </Description>
+    <Summary>The Asp Net Core plugin for use with Entity Framework Core. Easy to implement You API from database</Summary>
   </PropertyGroup>
 
   <ItemGroup>
