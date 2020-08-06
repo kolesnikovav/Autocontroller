@@ -19,7 +19,7 @@ CRUD actions becomes more easy!
 <li>Flexible and adjustable request/response schema</li>
 <li>Filtering results</li>
 <li>Authentificated Access and Permitions Control</li>
-<li>(TODO) Execute some Actions before save/delete</li>
+<li>Execute some Actions before save/delete</li>
 </ul>
 
 Routers and handlers for paths will be created:
