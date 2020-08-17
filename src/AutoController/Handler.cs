@@ -21,11 +21,11 @@ namespace AutoController
     {
         private static MethodInfo GetActionBeforeSave<TE>() where TE: class
         {
-            return typeof(TE).GetMethod("DoBeforeSave");
+            return typeof(TE).GetRuntimeMethod("DoBeforeSave", new Type[] { typeof(DbContext), typeof(string)});
         }
         private static MethodInfo GetActionBeforeDelete<TE>() where TE: class
         {
-            return typeof(TE).GetMethod("DoBeforeDelete");
+            return typeof(TE).GetRuntimeMethod("DoBeforeDelete", new Type[] { typeof(DbContext), typeof(string)});
         }
         private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
         {
