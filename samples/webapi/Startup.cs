@@ -28,7 +28,7 @@ namespace webapi
         {
             services.AddDbContext<ApplicationDBContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddAutoController<ApplicationDBContext>();
+            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,9 +43,9 @@ namespace webapi
             {
                 WriteIndented = true
             };
-            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr, InteractingType.JSON, "/login","/anauthorized",JsonOptions);
-            app.UseAutoController<ApplicationDBContext>("api2", true, DatabaseTypes.SQLite, connStr, InteractingType.XML, "/login","/anauthorized");
-            app.UseAutoController<ApplicationDBContext>("api3", true, DatabaseTypes.SQLite, connStr, null, "/login","/anauthorized");
+            app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login","/anauthorized",JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login","/anauthorized");
+            app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login","/anauthorized");
 
             app.UseRouting();
 
