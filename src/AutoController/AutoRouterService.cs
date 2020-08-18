@@ -59,8 +59,25 @@ namespace AutoController
     /// Service that handle requests for Entityes
     /// </summary>
 
-    public class AutoRouterService<T> where T: DbContext, IDisposable
+    public class AutoRouterService<T> where T : DbContext, IDisposable
     {
+        #region static members
+        private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions =
+                       new Dictionary<string, List<AuthorizeAttribute>>();
+        private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
+                       new Dictionary<Type, EntityKeyDescribtion>();
+        private static readonly Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
+        private static readonly Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
+        private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
+        private static readonly Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
+        private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
+        private static readonly Type KeyAttributeType = typeof(KeyAttribute);
+        private static string _connectionString;
+        /// <summary>
+        /// Database type for autocontroller
+        /// </summary>
+        private static DatabaseTypes DatabaseType { get; set; }
+        #endregion
         /// <summary>
         /// The Dictionary with all used routes
         /// </summary>
@@ -101,35 +118,25 @@ namespace AutoController
             }
         }
 
-        private readonly Dictionary<string,List<AuthorizeAttribute>> Restrictions =
-                       new Dictionary<string, List<AuthorizeAttribute>>();
-        private readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
-                       new Dictionary<Type, EntityKeyDescribtion>();
         private string _routePrefix;
         private string _startRoutePath;
-        private InteractingType?  _defaultInteractingType;
-        private JsonSerializerOptions  _jsonOptions;
-        private Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
+        private InteractingType? _defaultInteractingType;
+        private JsonSerializerOptions _jsonOptions;
         private ILogger logger;
-        private Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
-        private Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
-        private Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
-        private Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
-        private Type  KeyAttributeType  = typeof(KeyAttribute);
-        private string  _connectionString;
-        private string  _authentificationPath;
-        private string  _accessDeniedPath;
-        private  string _defaultGetAction;
-        private  string _defaultGetCountAction;
-        private  string _defaultPostAction;
-        private  string _defaultDeleteAction;
-        private  string _defaultUpdateAction;
-        private  string _defaultFilterParameter;
-        private  string _defaultSortParameter;
+
+        private string _authentificationPath;
+        private string _accessDeniedPath;
+        private string _defaultGetAction;
+        private string _defaultGetCountAction;
+        private string _defaultPostAction;
+        private string _defaultDeleteAction;
+        private string _defaultUpdateAction;
+        private string _defaultFilterParameter;
+        private string _defaultSortParameter;
         private string _defaultSortDirectionParameter;
-        private  string _defaultPageParameter;
+        private string _defaultPageParameter;
         private string _defaultItemsPerPageParameter;
-        private Dictionary<string,RequestParamName> _requestParams;
+        private Dictionary<string, RequestParamName> _requestParams;
         private void LogInformation(string message)
         {
             if (logger != null)
@@ -137,10 +144,7 @@ namespace AutoController
                 logger.LogInformation(message);
             }
         }
-        /// <summary>
-        /// Database type for autocontroller
-        /// </summary>
-        public DatabaseTypes DatabaseType {get;set;}
+       
         /// <summary>
         /// Attach to logger.
         /// </summary>
@@ -161,30 +165,30 @@ namespace AutoController
                     string optional = b.Optional ? "?" : String.Empty;
                     string route = routeClassName + "/{" + r + optional + "}";
                     //"{controller}/{action}/{property?}"
-                    RouteKey rkey = new RouteKey() {Path = route, HttpMethod = HttpMethod.Get};
+                    RouteKey rkey = new RouteKey() { Path = route, HttpMethod = HttpMethod.Get };
                     _autoroutes.Add(
                         rkey,
-                        new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage}
+                        new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
                         );
                     LogInformation(String.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
 
                 }
                 if (k != null)
                 {
-                    EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType});
+                    EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
                     string r = String.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-                    string route = routeClassName + "/{" + r +"}";
+                    string route = routeClassName + "/{" + r + "}";
                     //"{controller}/{action}/{property}"
-                    RouteKey rkey = new RouteKey() {Path = route, HttpMethod = HttpMethod.Post};
+                    RouteKey rkey = new RouteKey() { Path = route, HttpMethod = HttpMethod.Post };
                     _autoroutes.Add(
                         rkey,
-                        new RouteParameters() { EntityType = pInfo.PropertyType}
+                        new RouteParameters() { EntityType = pInfo.PropertyType }
                         );
                     LogInformation(String.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
                 }
             }
         }
-        private void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
+        private static void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
         {
             string AKey = AccessHelper.GetAccessKey(givenType, null, httpMethod);
             var restrictionsGet = givenType.GetCustomAttributes(GetRestictionAttributeType);
@@ -245,14 +249,14 @@ namespace AutoController
                 }
             }
         }
-        private void AddGetRoutesForEntity( string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
+        private void AddGetRoutesForEntity(string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
         {
-            ProccessRestrictions( givenType, HttpMethod.Get);
+            ProccessRestrictions(givenType, HttpMethod.Get);
             string basePath = _startRoutePath + controllerName;
             string countPath = basePath + "/" + _defaultGetCountAction;
             string defaultPath = basePath + "/" + _defaultGetAction;
-            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Get};
-            RouteKey rkeyCount = new RouteKey() { Path = countPath, HttpMethod = HttpMethod.Get};
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Get };
+            RouteKey rkeyCount = new RouteKey() { Path = countPath, HttpMethod = HttpMethod.Get };
             if (!_autoroutes.ContainsKey(rkeyDefault))
             {
                 RouteParameters rParam = new RouteParameters();
@@ -294,12 +298,12 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
             }
         }
-        private void AddPostRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        private void AddPostRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
         {
-            ProccessRestrictions( givenType, HttpMethod.Post);
+            ProccessRestrictions(givenType, HttpMethod.Post);
             string basePath = _startRoutePath + controllerName;
             string defaultPath = basePath + "/" + _defaultPostAction;
-            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post};
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post };
             if (!_autoroutes.ContainsKey(rkeyDefault))
             {
                 RouteParameters rParam = new RouteParameters();
@@ -320,12 +324,12 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
         }
-        private void AddDeleteRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        private void AddDeleteRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
         {
-            ProccessRestrictions( givenType, HttpMethod.Delete);
+            ProccessRestrictions(givenType, HttpMethod.Delete);
             string basePath = _startRoutePath + controllerName;
             string defaultPath = basePath + "/" + _defaultDeleteAction;
-            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete};
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete };
             if (!_autoroutes.ContainsKey(rkeyDefault))
             {
                 RouteParameters rParam = new RouteParameters();
@@ -345,12 +349,12 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
         }
-        private void AddUpdateRouteForEntity( string controllerName, Type givenType, InteractingType interactingType)
+        private void AddUpdateRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
         {
             //ProccessRestrictions( givenType, HttpMethod.Post);
             string basePath = _startRoutePath + controllerName;
             string defaultPath = basePath + "/" + _defaultUpdateAction;
-            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Put};
+            RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Put };
             if (!_autoroutes.ContainsKey(rkeyDefault))
             {
                 RouteParameters rParam = new RouteParameters();
@@ -371,31 +375,34 @@ namespace AutoController
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
         }
-        private void ProcessType (Type givenType)
+        private static void ProcessType(Type givenType)
         {
             if (givenType.IsClass)
             {
                 MapToControllerAttribute r = (MapToControllerAttribute)givenType.GetCustomAttribute(MapToControllerAttributeType);
                 if (r != null)
                 {
-                    InteractingType usedInteractingType = _defaultInteractingType == null ? r.InteractingType : (InteractingType)_defaultInteractingType;
-                    string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
-                    AddGetRoutesForEntity( controllerName, givenType, usedInteractingType, r.AllowAnonimus);
-                    AddPostRouteForEntity( controllerName, givenType, usedInteractingType);
-                    AddDeleteRouteForEntity( controllerName, givenType, usedInteractingType);
-                    AddUpdateRouteForEntity( controllerName, givenType, usedInteractingType);
-                    //AddRoutesForProperties( givenType, controllerName, (uint)0);
+                    ProccessRestrictions(givenType, HttpMethod.Get);
+                    ProccessRestrictions(givenType, HttpMethod.Post);
+                    ProccessRestrictions(givenType, HttpMethod.Delete);
+                    //InteractingType usedInteractingType = _defaultInteractingType == null ? r.InteractingType : (InteractingType)_defaultInteractingType;
+                    //string controllerName = String.IsNullOrWhiteSpace(r.ControllerName) ? givenType.Name : r.ControllerName;
+                    //AddGetRoutesForEntity(controllerName, givenType, usedInteractingType, r.AllowAnonimus);
+                    //AddPostRouteForEntity(controllerName, givenType, usedInteractingType);
+                    //AddDeleteRouteForEntity(controllerName, givenType, usedInteractingType);
+                    //AddUpdateRouteForEntity(controllerName, givenType, usedInteractingType);
+                    ////AddRoutesForProperties( givenType, controllerName, (uint)0);
                 }
             }
             if (givenType.IsGenericType)
             {
                 foreach (Type currentType in givenType.GetGenericArguments())
                 {
-                    ProcessType (currentType);
+                    ProcessType(currentType);
                 }
             }
         }
-        private void RetriveEntityKeys(Type givenType)
+        private static void RetriveEntityKeys(Type givenType)
         {
             if (givenType.IsClass)
             {
@@ -484,6 +491,9 @@ namespace AutoController
             );
             // found keys of entity for filering results
 
+        }
+        static AutoRouterService()
+        {
             PropertyInfo[] p = typeof(T).GetProperties();
             foreach (PropertyInfo t in p)
             {
