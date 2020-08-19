@@ -49,9 +49,10 @@ namespace AutoController
                                                 string authentificationPath,
                                                 string accessDeniedPath)
         {
-            //var rr = AccessHelper.EvaluateAccessRightsAsync<TE>(context.User, requestMethod, restrictions)
+            string AKey = AccessHelper.GetAccessKey(typeof(TE), null, requestMethod);
+            var rr = AccessHelper.EvaluateAccessRightsAsync(context, restrictions[AKey]);
             if (allowAnonimus && context.Request.Method == HttpMethods.Get) return true;
-            string AKey = AccessHelper.GetAccessKey(typeof(TE), null,requestMethod);
+            
             if (!restrictions.ContainsKey(AKey)) return true; // no restrictions!
             if (!context.User.Identity.IsAuthenticated)
             {
@@ -64,7 +65,7 @@ namespace AutoController
             }
             else // user is authentificated
             {
-               return AccessHelper.EvaluateAccessRightsAsync(context.User, restrictions[AKey]);
+               return AccessHelper.EvaluateAccessRightsAsync(context, restrictions[AKey]);
             }
             return true;
         }
