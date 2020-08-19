@@ -5,6 +5,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AutoController
 {
@@ -24,9 +27,9 @@ namespace AutoController
         /// <summary>
         /// Evaluate access right
         /// </summary>
-        /// <param name="user">Current user from context</param>
         /// <param name="restrictions">Restrictions for evaluate</param>
-        public static bool EvaluateAccessRightsAsync(System.Security.Claims.ClaimsPrincipal user, List<AuthorizeAttribute> restrictions)
+        /// <param name="context">Http context</param>
+        public static bool EvaluateAccessRightsAsync(HttpContext context, List<AuthorizeAttribute> restrictions)
         {
             bool result = false;
             foreach( var r in restrictions)
@@ -36,7 +39,20 @@ namespace AutoController
                     var roles = r.Roles.IndexOf(",") == -1 ? new string[] {r.Roles} : r.Roles.Split(",").Where( v => !String.IsNullOrWhiteSpace(v));
                     foreach (var rL in roles)
                     {
-                        if (user.IsInRole(rL)) return true; // success
+                        if (context.User.IsInRole(rL)) return true; // success
+                    }
+                }
+                if (!String.IsNullOrWhiteSpace(r.Policy))
+                {
+                    var policies = r.Policy.IndexOf(",") == -1 ? new string[] { r.Policy } : r.Policy.Split(",").Where(v => !String.IsNullOrWhiteSpace(v));
+                    var serv = context.RequestServices.GetServices<IAuthorizationService>();
+                    foreach (var w in serv)
+                    {
+                        foreach (var p in policies)
+                        {
+                            var res = w.AuthorizeAsync(context.User, p).Result;
+                            if (res.Succeeded) return true;
+                        }
                     }
                 }
                 // TODO Policy rights evaluated
