@@ -435,7 +435,7 @@ namespace AutoController
         }
 
         /// <summary>
-        /// Use version without database type & connection string!!!
+        /// Use version without database type and connection string!!!
         /// Using System.Reflection generates api controller for given type and properties
         /// By default, Controller name is the same as class name
         /// </summary>
@@ -524,7 +524,6 @@ namespace AutoController
                     AccessDeniedPath = _accessDeniedPath
                 });
             }
-            
             CreateRoutes();
         }
         /// <summary>

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PackageId>AutoController</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>Aleksandr Kolesnikov</Authors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>AutoController</AssemblyName>
@@ -12,10 +12,10 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
-    <Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller for each entity</Title>
+    <Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller (endpoint) for each entity</Title>
     <Keywords>API;Asp Net Core; Entity Framework Core; CRUD;api;database</Keywords>
     <Description>The Asp Net Core plugin for use with Entity Framework Core.
-    This plugin simplify client-server interacting, by creating autocontroller for each Entity in your DBContext.
+    This plugin simplify client-server interacting, by creating endpoints for each Entity in your DBContext.
     JSON and XML interacting types are supported.
     Handles GET POST PUT DELETE requests.
     Flexible and adjustable request schema.

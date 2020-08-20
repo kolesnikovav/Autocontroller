@@ -6,8 +6,7 @@
     <img alt="Nuget" src="https://img.shields.io/nuget/dt/AutoController">
 </a>
 
-Automaticly create REST API Controllers for given types.
-This project is designed for use with Entity Framework Core.
+Automaticly create REST API endpoints from your Entity Framework Core database context.
 CRUD actions becomes more easy!
 
 ## Supported features:
@@ -78,14 +77,13 @@ using AutoController;
         {
             // ---- Your code -----------//
             // Register Autocontroller in default DI container
-            services.AddAutoController<ApplicationDBContext>();
+            // you should describe database type and connection string here!
+            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // ---- Your code -----------//
-            // Get the database connection string
-            string connStr = Configuration.GetConnectionString("DefaultConnection");
             // Create JsonSerializerOptions object if you use JSON interacting method
             var JsonOptions = new JsonSerializerOptions
             {
@@ -93,11 +91,11 @@ using AutoController;
             };
             // Create your api
             // handle requests for api/<your entity>/... paths with Json
-            app.UseAutoController<ApplicationDBContext>("api", true, DatabaseTypes.SQLite, connStr, InteractingType.JSON, JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, JsonOptions);
             // handle requests for apixml/<your entity>/... paths with XML
-            app.UseAutoController<ApplicationDBContext>("apixml", true, DatabaseTypes.SQLite, connStr, InteractingType.XML);
+            app.UseAutoController<ApplicationDBContext>("apixml", true, InteractingType.XML);
             // handle requests for apijson/<your entity>/... paths with Json
-            app.UseAutoController<ApplicationDBContext>("apijson", true, DatabaseTypes.SQLite, connStr, null, JsonOptions);
+            app.UseAutoController<ApplicationDBContext>("apijson", true,  null, JsonOptions);
 
         }
     }

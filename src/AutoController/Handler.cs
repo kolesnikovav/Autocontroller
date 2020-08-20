@@ -50,9 +50,7 @@ namespace AutoController
                                                 string accessDeniedPath)
         {
             string AKey = AccessHelper.GetAccessKey(typeof(TE), null, requestMethod);
-            var rr = AccessHelper.EvaluateAccessRightsAsync(context, restrictions[AKey]);
             if (allowAnonimus && context.Request.Method == HttpMethods.Get) return true;
-            
             if (!restrictions.ContainsKey(AKey)) return true; // no restrictions!
             if (!context.User.Identity.IsAuthenticated)
             {

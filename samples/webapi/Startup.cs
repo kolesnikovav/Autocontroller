@@ -38,7 +38,6 @@ namespace webapi
             {
                 app.UseDeveloperExceptionPage();
             }
-            string connStr = Configuration.GetConnectionString("DefaultConnection");
             var JsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true
