@@ -19,6 +19,7 @@ CRUD actions becomes more easy!
 <li>Filtering results</li>
 <li>Authentificated Access and Permitions Control</li>
 <li>Execute some Actions before save/delete</li>
+<li>Execute some Actions before DbContext SaveChanges/SaveChangesAsync</li>
 </ul>
 
 Routers and handlers for paths will be created:

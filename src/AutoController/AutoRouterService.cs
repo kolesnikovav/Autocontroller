@@ -77,6 +77,8 @@ namespace AutoController
         private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
         private static readonly Type KeyAttributeType = typeof(KeyAttribute);
         private static string _connectionString;
+        private static MethodInfo _dbContextBeforeSaveChangesMethod;
+        private static Func<T> _dbContextFactory;
         /// <summary>
         /// Database type for autocontroller
         /// </summary>
@@ -277,7 +279,8 @@ namespace AutoController
                                                               _authentificationPath,
                                                               _accessDeniedPath,
                                                               _requestParams,
-                                                             _jsonOptions });
+                                                             _jsonOptions,
+                                                             _dbContextFactory });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -296,7 +299,8 @@ namespace AutoController
                                                             allowAnonimus,
                                                             _authentificationPath,
                                                             _accessDeniedPath,
-                                                            _requestParams });
+                                                            _requestParams,
+                                                            _dbContextFactory });
                 _autoroutes.Add(rkeyCount, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyCount, givenType));
             }
@@ -321,7 +325,9 @@ namespace AutoController
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
-                                                                          _jsonOptions });
+                                                                          _jsonOptions,
+                                                                          _dbContextBeforeSaveChangesMethod,
+                                                                          _dbContextFactory });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -345,7 +351,9 @@ namespace AutoController
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
-                                                                          _jsonOptions });
+                                                                          _jsonOptions,
+                                                                          _dbContextBeforeSaveChangesMethod,
+                                                                          _dbContextFactory });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -370,7 +378,8 @@ namespace AutoController
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
-                                                                          _jsonOptions });
+                                                                          _jsonOptions,
+                                                                          _dbContextBeforeSaveChangesMethod });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
@@ -401,7 +410,6 @@ namespace AutoController
         }
         private void CreateRoutes()
         {
-            
             foreach (var c in ControllerNames)
             {
                 InteractingType usedInteractingType = _defaultInteractingType == null ? c.Value.InteractingType : (InteractingType)_defaultInteractingType;
@@ -608,7 +616,6 @@ namespace AutoController
                     AccessDeniedPath = _accessDeniedPath
                 });
             }
-
             CreateRoutes();
         }
         /// <summary>
@@ -625,10 +632,13 @@ namespace AutoController
         /// </summary>
         /// <param name="connString">Connection string</param>
         /// <param name="databaseType">Database type for DBContext</param>
-        public static void SetStaticParams(DatabaseTypes databaseType, string connString)
+        /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
+        public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo DbContextBeforeSaveChangesMethod, Func<T> DbContextFactory)
         {
             _connectionString = connString;
             DatabaseType = databaseType;
+            _dbContextBeforeSaveChangesMethod = DbContextBeforeSaveChangesMethod;
+            _dbContextFactory = DbContextFactory;
         }
         static AutoRouterService()
         {
