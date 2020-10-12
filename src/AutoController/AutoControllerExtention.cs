@@ -41,9 +41,11 @@ namespace AutoController
         /// <param name="services">The <see cref="IServiceCollection"/>.</param>
         /// <param name="dbType">The type of Database</param>
         /// <param name="connString">Connection string</param>
-        public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString) where T : DbContext
+        /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
+        /// <param name="DbContextFactory">Custom DbContextFactory</param>
+        public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, MethodInfo DbContextBeforeSaveChangesMethod = null, Func<T> DbContextFactory = null) where T : DbContext
         {
-            AutoRouterService<T>.SetStaticParams(dbType, connString);
+            AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory);
             services.AddSingleton(typeof(AutoRouterService<T>));
         }
         /// <summary>

@@ -33,6 +33,13 @@ namespace AutoController
             if (dbType == DatabaseTypes.SQLServer) return SQLServerProvider<T>.GetBuilder(connString);
             return PostgresProvider<T>.GetBuilder(connString);
         }
+        private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T> factory = null) where T : DbContext, IDisposable
+        {
+            if (factory != null) return factory();
+            var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+            return (T)System.Activator.CreateInstance(typeof(T), new object[] { optionsBuilder });
+        }
+
         private static Stream GenerateStreamFromString(string s)
         {
             var stream = new MemoryStream();
@@ -120,7 +127,8 @@ namespace AutoController
             string authentificationPath,
             string accessDeniedPath,
             Dictionary<string,RequestParamName> _requestParams,
-            JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
+            JsonSerializerOptions jsonSerializerOptions = null,
+            Func<T> customDbContextFactory = null             ) where T : DbContext, IDisposable
                                                                 where TE : class
         {
             return async (context) =>
@@ -133,9 +141,8 @@ namespace AutoController
                 var e = entityKeys;
                 var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
                 IEnumerable<TE> queryResult;
-                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-                Type t = typeof(T);
-                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+
+                using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
                 {
                     queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
                 }
@@ -164,7 +171,8 @@ namespace AutoController
                                                          bool allowAnonimus,
                                                          string authentificationPath,
                                                          string accessDeniedPath,
-                                                         Dictionary<string,RequestParamName> requestParams) where T : DbContext, IDisposable
+                                                         Dictionary<string,RequestParamName> requestParams,
+                                                         Func<T> customDbContextFactory = null            ) where T : DbContext, IDisposable
                                                                                                             where TE : class
         {
             return async (context) =>
@@ -176,9 +184,8 @@ namespace AutoController
                 }
                 var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
                 int queryResult;
-                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-                Type t = typeof(T);
-                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+
+                using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
                 {
                     queryResult = dbcontext.Set<TE>().AsNoTracking().Count();
                 }
@@ -210,6 +217,11 @@ namespace AutoController
             }
             return result;
         }
+        private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[] parameters = null) where T : DbContext, IDisposable
+        {
+            if (method == null) return;
+            method.Invoke(context, parameters);
+        }
 
         private static RequestDelegate PostHandler<T, TE>(
             bool update,
@@ -219,7 +231,9 @@ namespace AutoController
             InteractingType interactingType,
             string authentificationPath,
             string accessDeniedPath,
-            JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
+            JsonSerializerOptions jsonSerializerOptions = null,
+            MethodInfo dbContextBeforeSaveChangesMethod = null,
+            Func<T> customDbContextFactory = null             ) where T : DbContext, IDisposable
                                                                 where TE : class
         {
             return async (context) =>
@@ -234,9 +248,7 @@ namespace AutoController
                 var mi = GetActionBeforeSave<TE>();
                 string Reason = "";
 
-                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-                Type t = typeof(T);
-                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+                using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
                 {
                     if (interactingType == InteractingType.JSON)
                     {
@@ -258,6 +270,7 @@ namespace AutoController
                                         {
                                             dbcontext.Set<TE>().Update(recivedData);
                                         }
+                                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                         await dbcontext.SaveChangesAsync();
                                         byte[] jsonUtf8Bytes;
                                         jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
@@ -290,6 +303,7 @@ namespace AutoController
                                             {
                                                 dbcontext.Set<TE>().UpdateRange(recivedDataList);
                                             }
+                                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                             await dbcontext.SaveChangesAsync();
                                             byte[] jsonUtf8Bytes;
                                             jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
@@ -327,6 +341,7 @@ namespace AutoController
                                     {
                                         dbcontext.Set<TE>().UpdateRange(recivedDataL);
                                     }
+                                    DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                     await dbcontext.SaveChangesAsync();
                                     StringWriter textWriter = new StringWriter();
                                     serializer.Serialize(textWriter, recivedDataL.ToList());
@@ -351,7 +366,9 @@ namespace AutoController
             InteractingType interactingType,
             string authentificationPath,
             string accessDeniedPath,
-            JsonSerializerOptions jsonSerializerOptions = null) where T : DbContext, IDisposable
+            JsonSerializerOptions jsonSerializerOptions = null,
+            MethodInfo dbContextBeforeSaveChangesMethod = null,
+            Func<T> customDbContextFactory = null             ) where T : DbContext, IDisposable
                                                                 where TE : class
         {
             return async (context) =>
@@ -366,9 +383,7 @@ namespace AutoController
                 var mi = GetActionBeforeDelete<TE>();
                 string Reason ="";
 
-                var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-                Type t = typeof(T);
-                using (T dbcontext = (T)Activator.CreateInstance(t, new object[] { optionsBuilder.Options }))
+                using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
                 {
                     if (interactingType == InteractingType.JSON)
                     {
@@ -383,6 +398,7 @@ namespace AutoController
                                     if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                                     {
                                         dbcontext.Set<TE>().Remove(recivedData);
+                                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                         await dbcontext.SaveChangesAsync();
                                         await context.Response.WriteAsync("Deleted");
                                     }
@@ -403,6 +419,7 @@ namespace AutoController
                                         if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
                                         {
                                             dbcontext.Set<TE>().RemoveRange(recivedDataList);
+                                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                             await dbcontext.SaveChangesAsync();
                                             await context.Response.WriteAsync("Deleted");
                                         }
@@ -435,6 +452,7 @@ namespace AutoController
                                 if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
                                 {
                                     dbcontext.Set<TE>().RemoveRange(recivedDataL);
+                                    DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                     await dbcontext.SaveChangesAsync();
                                     await context.Response.WriteAsync("Deleted");
                                 }
