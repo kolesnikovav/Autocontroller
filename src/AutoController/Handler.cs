@@ -37,7 +37,9 @@ namespace AutoController
         {
             if (factory != null) return factory();
             var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-            return (T)System.Activator.CreateInstance(typeof(T), new object[] { optionsBuilder });
+
+            var options = optionsBuilder.Options;
+            return (T)System.Activator.CreateInstance(typeof(T), new object[] { options });
         }
 
         private static Stream GenerateStreamFromString(string s)
