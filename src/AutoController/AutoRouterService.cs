@@ -371,7 +371,7 @@ namespace AutoController
                                                             new Type[] { typeof(T), givenType },
                                                             this,
                                                             new object[] {
-                                                                          true,
+                                                                          false,
                                                                           Restrictions,
                                                                           DatabaseType,
                                                                           _connectionString,
@@ -379,7 +379,8 @@ namespace AutoController
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
                                                                           _jsonOptions,
-                                                                          _dbContextBeforeSaveChangesMethod });
+                                                                          _dbContextBeforeSaveChangesMethod,
+                                                                          _dbContextFactory });
                 _autoroutes.Add(rkeyDefault, rParam);
                 LogInformation(String.Format("Add route {0} for {1}", rkeyDefault, givenType));
             }
