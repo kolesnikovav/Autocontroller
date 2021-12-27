@@ -29,9 +29,13 @@ namespace AutoController
         }
         private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
         {
-            if (dbType == DatabaseTypes.SQLite) return SQLiteProvider<T>.GetBuilder(connString);
-            if (dbType == DatabaseTypes.SQLServer) return SQLServerProvider<T>.GetBuilder(connString);
-            return PostgresProvider<T>.GetBuilder(connString);
+            switch (dbType) {
+                case DatabaseTypes.SQLite: return SQLiteProvider<T>.GetBuilder(connString);
+                case DatabaseTypes.SQLServer: return SQLServerProvider<T>.GetBuilder(connString);
+                case DatabaseTypes.Postgres: return PostgresProvider<T>.GetBuilder(connString);
+                case DatabaseTypes.MySQL: return MySQLProvider<T>.GetBuilder(connString);
+                default:  return InMemoryProvider<T>.GetBuilder(connString);
+            }
         }
         private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T> factory = null) where T : DbContext, IDisposable
         {

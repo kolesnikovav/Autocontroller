@@ -18,6 +18,15 @@ namespace AutoController
         /// <summary>
         /// PostgreSQL database
         /// </summary>
-        Postgres
+        Postgres,
+        /// <summary>
+        /// MySQL database (by Oracle)
+        /// </summary>
+        MySQL,
+        /// <summary>
+        /// InMemory database (for testing only)
+        /// </summary>
+        InMemory
+
     }
 }
