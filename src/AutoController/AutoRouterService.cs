@@ -634,6 +634,7 @@ namespace AutoController
         /// <param name="connString">Connection string</param>
         /// <param name="databaseType">Database type for DBContext</param>
         /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
+        /// <param name="DbContextFactory">Custom DbContext factory</param>
         public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo DbContextBeforeSaveChangesMethod, Func<T> DbContextFactory)
         {
             _connectionString = connString;
