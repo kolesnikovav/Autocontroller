@@ -1,20 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <PackageId>AutoController</PackageId>
-    <Version>1.0.5</Version>
-    <Authors>Aleksandr Kolesnikov</Authors>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AssemblyName>AutoController</AssemblyName>
-    <PackageTags>asp-net-core;entity-framework;CRUD;controller;api</PackageTags>
-    <PackageProjectUrl>https://github.com/kolesnikovav/Autocontroller</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
-    <Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller (endpoint) for each entity</Title>
-    <Keywords>API;Asp Net Core; Entity Framework Core; CRUD;api;database</Keywords>
-    <Description>The Asp Net Core plugin for use with Entity Framework Core.
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<PackageId>AutoController</PackageId>
+		<Version>1.0.7</Version>
+		<Authors>Aleksandr Kolesnikov</Authors>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<AssemblyName>AutoController</AssemblyName>
+		<PackageTags>asp-net-core;entity-framework;CRUD;controller;api</PackageTags>
+		<PackageProjectUrl>https://github.com/kolesnikovav/Autocontroller</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
+		<Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller (endpoint) for each entity</Title>
+		<Keywords>API;Asp Net Core; Entity Framework Core; CRUD;api;database</Keywords>
+		<Description>The Asp Net Core plugin for use with Entity Framework Core.
     This plugin simplify client-server interacting, by creating endpoints for each Entity in your DBContext.
     JSON and XML interacting types are supported.
     Handles GET POST PUT DELETE requests.
@@ -29,23 +28,18 @@
       SQLServer
       PostgreSQL
     </Description>
-    <Summary>The Asp Net Core plugin for use with Entity Framework Core. Easy to implement You API from database</Summary>
-  </PropertyGroup>
-
-  <ItemGroup>
-
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="3.1.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.7" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.1" />
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
-  </ItemGroup>
-
+		<Summary>The Asp Net Core plugin for use with Entity Framework Core. Easy to implement You API from database</Summary>
+	</PropertyGroup>
+	<ItemGroup/>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="6.0.1"/>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.1"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.2"/>
+		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.15"/>
+		<PackageReference Include="System.Net.Http" Version="4.3.4"/>
+	</ItemGroup>
 </Project>
