@@ -9,9 +9,9 @@
            "type": "coreclr",
            "request": "launch",
            "preLaunchTask": "build-test",
-           "program": "${workspaceFolder}/test/AppExample/bin/Debug/net6.0/AppExample.dll",
+           "program": "${workspaceFolder}/test/ControllerTests/bin/Debug/net6.0/ControllerTests.dll",
            "args": [],
-           "cwd": "${workspaceFolder}",
+           "cwd": "${workspaceFolder}/test/ControllerTests",
            "stopAtEntry": false,
            "serverReadyAction": {
                "action": "openExternally",

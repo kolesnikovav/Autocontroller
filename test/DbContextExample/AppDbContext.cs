@@ -12,7 +12,7 @@ namespace DbContextExample
         { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Post>().HasKey(u => new { u.Blog, u.Id });
+            modelBuilder.Entity<Post>().HasKey(u => new { u.BlogId, u.Id });
         }
     }
 }
