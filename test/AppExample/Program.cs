@@ -1,24 +1,26 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using DbContextExample;
-using AutoController;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-var builder = WebApplication.CreateBuilder(args);
-var dbName = Guid.NewGuid().ToString();
-builder.Services.AddDbContext<AppDBContext>(opt => opt.UseInMemoryDatabase(databaseName: dbName), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-builder.Services.AddAutoController<AppDBContext>(DatabaseTypes.InMemory, dbName);
-
-var app = builder.Build();
-
-var JsonOptions = new JsonSerializerOptions
+namespace AppExample
 {
-    WriteIndented = true
-};
-app.UseAutoController<AppDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
-app.UseAutoController<AppDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
-app.UseAutoController<AppDBContext>("api3", true, null, "/login", "/anauthorized");
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
 
-app.MapGet("/", () => "Hello World!");
-
-app.Run();
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
+    }
+}
