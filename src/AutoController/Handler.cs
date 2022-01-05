@@ -193,7 +193,7 @@ namespace AutoController
 
                 using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Count();
+                    queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
                 }
                 await context.Response.WriteAsync(queryResult.ToString());
             };

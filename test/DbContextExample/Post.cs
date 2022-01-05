@@ -8,7 +8,7 @@ namespace DbContextExample
     [MapToController("Posts", InteractingType.JSON, 25, false)]
     public class Post
     {
-        public int BlogId { get; set; }
+        [Key]
         public int Id { get; set; }
         public string Content { get; set; }
     }

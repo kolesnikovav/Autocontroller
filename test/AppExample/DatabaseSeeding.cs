@@ -7,12 +7,10 @@ namespace AppExample
         public static void InitializeDbForTests(AppDBContext db)
         {
             var blogs = GetBlogs();
-            foreach (var q in blogs)
-            {
-                var posts = GetPosts(q);
-                db.Posts.AddRange(posts);
-            }
+            var posts = GetPosts();
+
             db.Blogs.AddRange(blogs);
+            db.Posts.AddRange(posts);
             db.SaveChanges();
         }
 
@@ -33,13 +31,13 @@ namespace AppExample
            };
         }
 
-        static List<Post> GetPosts(Blog b)
+        static List<Post> GetPosts()
         {
             return new List<Post>()
             {
-                new Post(){ BlogId =  b.Id, Id = 1,  Content = "This is a post 1"},
-                new Post(){ BlogId =  b.Id, Id = 2,  Content = "This is a post 2"},
-                new Post(){ BlogId =  b.Id, Id = 3,  Content = "This is a post 3"}
+                new Post(){ Id = 1,  Content = "This is a post 1"},
+                new Post(){ Id = 2,  Content = "This is a post 2"},
+                new Post(){ Id = 3,  Content = "This is a post 3"}
             };
         }
 
