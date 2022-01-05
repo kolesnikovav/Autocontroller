@@ -26,6 +26,30 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "build-test",
+            "command": "/usr/bin/dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/test/AppExample/AppExample.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish",
+            "command": "/usr/bin/dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/samples/webapi/webapi.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "watch",
             "command": "/usr/bin/dotnet",
             "type": "process",

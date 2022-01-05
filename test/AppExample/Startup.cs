@@ -1,6 +1,4 @@
 using System;
-using Xunit;
-using AutoController;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
+using AutoController;
+using DbContextExample;
 
-namespace test
+namespace AppExample
 {
+    public class Startup
+    {
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -25,9 +27,9 @@ namespace test
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDBContext>(options =>
-                options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
+            var dbName = Guid.NewGuid().ToString();
+            services.AddDbContext<DbContextExample.AppDBContext>(opt => opt.UseInMemoryDatabase(databaseName: dbName), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+            services.AddAutoController<DbContextExample.AppDBContext>(DatabaseTypes.InMemory, dbName);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,9 +43,9 @@ namespace test
             {
                 WriteIndented = true
             };
-            app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login","/anauthorized",JsonOptions);
-            app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login","/anauthorized");
-            app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login","/anauthorized");
+            app.UseAutoController<DbContextExample.AppDBContext>("api", true, InteractingType.JSON, "/login","/anauthorized",JsonOptions);
+            app.UseAutoController<DbContextExample.AppDBContext>("api2", true, InteractingType.XML, "/login","/anauthorized");
+            app.UseAutoController<DbContextExample.AppDBContext>("api3", true, null, "/login","/anauthorized");
 
             app.UseRouting();
 
