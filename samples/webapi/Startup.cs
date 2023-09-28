@@ -29,6 +29,8 @@ namespace webapi
             services.AddDbContext<ApplicationDBContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
             services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,6 +65,9 @@ namespace webapi
                     await context.Response.WriteAsync("Access Denied page");
                 });
             });
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
     }
 }

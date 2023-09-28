@@ -7,27 +7,25 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 
-namespace AutoController
+namespace AutoController;
+/// <summary>
+/// Contains information about entity keys
+/// </summary>
+public struct EntityKeyDescribtion
 {
     /// <summary>
-    /// Contains information about entity keys
+    /// Name of entity key
     /// </summary>
-    public struct EntityKeyDescribtion
+    public string Name;
+    /// <summary>
+    /// Type of entity key
+    /// </summary>
+    public Type KeyType;
+    /// <summary>
+    /// Retrives parameter expression from this describtion for use in Linq queries
+    /// </summary>
+    public ParameterExpression GetParameter()
     {
-        /// <summary>
-        /// Name of entity key
-        /// </summary>
-        public string Name;
-        /// <summary>
-        /// Type of entity key
-        /// </summary>
-        public Type KeyType;
-        /// <summary>
-        /// Retrives parameter expression from this describtion for use in Linq queries
-        /// </summary>
-        public ParameterExpression GetParameter()
-        {
-            return Expression.Parameter(KeyType, "x");
-        }
+        return Expression.Parameter(KeyType, "x");
     }
 }

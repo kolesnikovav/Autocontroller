@@ -1,15 +1,14 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace AutoController
+namespace AutoController;
+
+internal static class InMemoryProvider<T> where T : DbContext, IDisposable
 {
-    internal static class InMemoryProvider<T> where T: DbContext, IDisposable
+    public static DbContextOptionsBuilder<T> GetBuilder(string connString)
     {
-        public static DbContextOptionsBuilder<T> GetBuilder(string connString)
-        {
-            var Builder = new DbContextOptionsBuilder<T>();
-            Builder.UseInMemoryDatabase<T>(connString);
-            return Builder;
-        }
+        var Builder = new DbContextOptionsBuilder<T>();
+        Builder.UseInMemoryDatabase<T>(connString);
+        return Builder;
     }
 }
