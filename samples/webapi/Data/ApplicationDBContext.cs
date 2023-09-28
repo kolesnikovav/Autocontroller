@@ -10,13 +10,11 @@ using Microsoft.Extensions.Hosting;
 using AutoController;
 using Microsoft.EntityFrameworkCore;
 
-namespace webapi
+namespace webapi;
+public class ApplicationDBContext : DbContext
 {
-    public class ApplicationDBContext: DbContext
-    {
-        public DbSet<Blog> Blogs {get;set;}
-        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
-        :base(options)
-        {}
-    }
+    public DbSet<Blog> Blogs { get; set; }
+    public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
+    : base(options)
+    { }
 }
