@@ -65,12 +65,14 @@ public static class RequestParams
     /// </summary>
     public static Dictionary<string, RequestParamName> Create(string page, string size, string filter, string sort, string sortdirection)
     {
-        var res = new Dictionary<string, RequestParamName>();
-        res.Add(page, new RequestParamName() { UserDefinedValue = "page", TypeToCast = typeof(uint) });
-        res.Add(size, new RequestParamName() { UserDefinedValue = "size", TypeToCast = typeof(uint) });
-        res.Add(filter, new RequestParamName() { UserDefinedValue = "filter", TypeToCast = typeof(string) });
-        res.Add(sort, new RequestParamName() { UserDefinedValue = "sort", TypeToCast = typeof(string) });
-        res.Add(sortdirection, new RequestParamName() { UserDefinedValue = "sortdirection", TypeToCast = typeof(string) });
+        var res = new Dictionary<string, RequestParamName>
+        {
+            { page, new RequestParamName() { UserDefinedValue = "page", TypeToCast = typeof(uint) } },
+            { size, new RequestParamName() { UserDefinedValue = "size", TypeToCast = typeof(uint) } },
+            { filter, new RequestParamName() { UserDefinedValue = "filter", TypeToCast = typeof(string) } },
+            { sort, new RequestParamName() { UserDefinedValue = "sort", TypeToCast = typeof(string) } },
+            { sortdirection, new RequestParamName() { UserDefinedValue = "sortdirection", TypeToCast = typeof(string) } }
+        };
         return res;
     }
     /// <summary>
@@ -82,16 +84,14 @@ public static class RequestParams
     public static UserRequestParams RetriveQueryParam(IQueryCollection requestData, Dictionary<string, RequestParamName> reqDefinitions)
     {
         var result = new UserRequestParams();
-        uint pageNumber = 0;
-        uint pageSize = 0;
         if (requestData.ContainsKey(reqDefinitions["page"].UserDefinedValue))
         {
-            UInt32.TryParse(requestData[reqDefinitions["page"].UserDefinedValue], out pageNumber);
+            uint.TryParse(requestData[reqDefinitions["page"].UserDefinedValue], out uint pageNumber);
             result.pageNumber = pageNumber;
         }
         if (requestData.ContainsKey(reqDefinitions["size"].UserDefinedValue))
         {
-            UInt32.TryParse(requestData[reqDefinitions["size"].UserDefinedValue], out pageSize);
+            uint.TryParse(requestData[reqDefinitions["size"].UserDefinedValue], out uint pageSize);
             result.pageSize = pageSize;
         }
         if (requestData.ContainsKey(reqDefinitions["filter"].UserDefinedValue))

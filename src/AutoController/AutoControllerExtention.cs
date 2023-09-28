@@ -55,11 +55,7 @@ public static class AutoControllerExtention
     /// <param name="builder">The applicaton builder</param>
     public static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T : DbContext
     {
-        var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>));
-        if (service == null)
-        {
-            throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
-        }
+        var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
     private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)

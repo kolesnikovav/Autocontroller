@@ -43,7 +43,7 @@ internal static class Handler
         var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
 
         var options = optionsBuilder.Options;
-        return (T)System.Activator.CreateInstance(typeof(T), new object[] { options });
+        return (T)Activator.CreateInstance(typeof(T), new object[] { options });
     }
 
     private static Stream GenerateStreamFromString(string s)
@@ -87,9 +87,9 @@ internal static class Handler
         int skip = (int)((QueryParams.pageNumber - 1) * QueryParams.pageSize);
         if (QueryParams.pageSize == 0)
         {
-            if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+            if (!string.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
             {
-                if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                if (!string.IsNullOrWhiteSpace(QueryParams.sortDirection))
                 {
                     queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).ToList<TE>();
                 }
@@ -105,9 +105,9 @@ internal static class Handler
         }
         else
         {
-            if (!String.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
+            if (!string.IsNullOrWhiteSpace(QueryParams.sort) && typeof(TE).GetProperty(QueryParams.sort) != null)
             {
-                if (!String.IsNullOrWhiteSpace(QueryParams.sortDirection))
+                if (!string.IsNullOrWhiteSpace(QueryParams.sortDirection))
                 {
                     queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
                 }
@@ -156,14 +156,14 @@ internal static class Handler
             {
                 byte[] jsonUtf8Bytes;
                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, jsonSerializerOptions);
-                await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
+                await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
             }
             else if (interactingType == InteractingType.XML)
             {
-                XmlRootAttribute a = new XmlRootAttribute("result");
+                XmlRootAttribute a = new("result");
                 // XmlSerializer does not support IEnumerable<T>
-                XmlSerializer serializer = new XmlSerializer(typeof(List<TE>), a);
-                StringWriter textWriter = new StringWriter();
+                XmlSerializer serializer = new(typeof(List<TE>), a);
+                StringWriter textWriter = new();
                 serializer.Serialize(textWriter, queryResult.ToList());
                 await context.Response.WriteAsync(textWriter.ToString());
                 await textWriter.DisposeAsync();
@@ -254,114 +254,108 @@ internal static class Handler
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            if (interactingType == InteractingType.JSON)
             {
-                if (interactingType == InteractingType.JSON)
+                using var reader = new StreamReader(context.Request.Body);
+                var body = await reader.ReadToEndAsync();
+                try
                 {
-                    using (var reader = new StreamReader(context.Request.Body))
+                    recivedData = JsonSerializer.Deserialize<TE>(body);
+                    if (recivedData != null)
                     {
-                        var body = await reader.ReadToEndAsync();
-                        try
+                        if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                         {
-                            recivedData = JsonSerializer.Deserialize<TE>(body);
-                            if (recivedData != null)
+                            if (!update)
                             {
-                                if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
-                                {
-                                    if (!update)
-                                    {
-                                        dbcontext.Set<TE>().Add(recivedData);
-                                    }
-                                    else
-                                    {
-                                        dbcontext.Set<TE>().Update(recivedData);
-                                    }
-                                    DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                    await dbcontext.SaveChangesAsync();
-                                    byte[] jsonUtf8Bytes;
-                                    jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
-                                    await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
-                                }
-                                else
-                                {
-                                    await context.Response.WriteAsync(Reason);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            try
-                            {
-                                recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
-                                if (recivedDataList != null)
-                                {
-                                    if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
-                                    {
-                                        await context.Response.WriteAsync(Reason);
-                                    }
-                                    else
-                                    {
-                                        if (!update)
-                                        {
-                                            dbcontext.Set<TE>().AddRange(recivedDataList);
-                                        }
-                                        else
-                                        {
-                                            dbcontext.Set<TE>().UpdateRange(recivedDataList);
-                                        }
-                                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                        await dbcontext.SaveChangesAsync();
-                                        byte[] jsonUtf8Bytes;
-                                        jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
-                                        await context.Response.WriteAsync(System.Text.Encoding.UTF8.GetString(jsonUtf8Bytes));
-                                    }
-                                }
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                    }
-                }
-                else if (interactingType == InteractingType.XML)
-                {
-                    using (var reader = new StreamReader(context.Request.Body))
-                    {
-                        var body = await reader.ReadToEndAsync();
-
-                        Stream stream = GenerateStreamFromString(body);
-                        XmlRootAttribute a = new XmlRootAttribute("result");
-                        XmlSerializer serializer = new XmlSerializer(typeof(List<TE>), a);
-                        var recivedDataL = (List<TE>)serializer.Deserialize(stream);
-                        await stream.DisposeAsync();
-                        if (recivedDataL != null && recivedDataL.Count > 0)
-                        {
-                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
-                            {
-                                if (!update)
-                                {
-                                    dbcontext.Set<TE>().AddRange(recivedDataL);
-                                }
-                                else
-                                {
-                                    dbcontext.Set<TE>().UpdateRange(recivedDataL);
-                                }
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                await dbcontext.SaveChangesAsync();
-                                StringWriter textWriter = new StringWriter();
-                                serializer.Serialize(textWriter, recivedDataL.ToList());
-                                await context.Response.WriteAsync(textWriter.ToString());
-                                await textWriter.DisposeAsync();
+                                dbcontext.Set<TE>().Add(recivedData);
                             }
                             else
                             {
-                                await context.Response.WriteAsync(Reason);
+                                dbcontext.Set<TE>().Update(recivedData);
                             }
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            await dbcontext.SaveChangesAsync();
+                            byte[] jsonUtf8Bytes;
+                            jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
+                            await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                         }
-                        // Do something
+                        else
+                        {
+                            await context.Response.WriteAsync(Reason);
+                        }
                     }
                 }
+                catch
+                {
+                    try
+                    {
+                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        if (recivedDataList != null)
+                        {
+                            if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            {
+                                await context.Response.WriteAsync(Reason);
+                            }
+                            else
+                            {
+                                if (!update)
+                                {
+                                    dbcontext.Set<TE>().AddRange(recivedDataList);
+                                }
+                                else
+                                {
+                                    dbcontext.Set<TE>().UpdateRange(recivedDataList);
+                                }
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                await dbcontext.SaveChangesAsync();
+                                byte[] jsonUtf8Bytes;
+                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
+                                await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            else if (interactingType == InteractingType.XML)
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var body = await reader.ReadToEndAsync();
+
+                Stream stream = GenerateStreamFromString(body);
+                XmlRootAttribute a = new("result");
+                XmlSerializer serializer = new(typeof(List<TE>), a);
+                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                await stream.DisposeAsync();
+                if (recivedDataL != null && recivedDataL.Count > 0)
+                {
+                    if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
+                    {
+                        if (!update)
+                        {
+                            dbcontext.Set<TE>().AddRange(recivedDataL);
+                        }
+                        else
+                        {
+                            dbcontext.Set<TE>().UpdateRange(recivedDataL);
+                        }
+                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        await dbcontext.SaveChangesAsync();
+                        StringWriter textWriter = new();
+                        serializer.Serialize(textWriter, recivedDataL.ToList());
+                        await context.Response.WriteAsync(textWriter.ToString());
+                        await textWriter.DisposeAsync();
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync(Reason);
+                    }
+                }
+                // Do something
             }
         };
     }
@@ -444,31 +438,29 @@ internal static class Handler
                 }
                 else if (interactingType == InteractingType.XML)
                 {
-                    using (var reader = new StreamReader(context.Request.Body))
-                    {
-                        var body = await reader.ReadToEndAsync();
+                    using var reader = new StreamReader(context.Request.Body);
+                    var body = await reader.ReadToEndAsync();
 
-                        Stream stream = GenerateStreamFromString(body);
-                        XmlRootAttribute a = new XmlRootAttribute("result");
-                        XmlSerializer serializer = new XmlSerializer(typeof(List<TE>), a);
-                        var recivedDataL = (List<TE>)serializer.Deserialize(stream);
-                        await stream.DisposeAsync();
-                        if (recivedDataL != null && recivedDataL.Count > 0)
+                    Stream stream = GenerateStreamFromString(body);
+                    XmlRootAttribute a = new("result");
+                    XmlSerializer serializer = new(typeof(List<TE>), a);
+                    var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                    await stream.DisposeAsync();
+                    if (recivedDataL != null && recivedDataL.Count > 0)
+                    {
+                        if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
                         {
-                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
-                            {
-                                dbcontext.Set<TE>().RemoveRange(recivedDataL);
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                await dbcontext.SaveChangesAsync();
-                                await context.Response.WriteAsync("Deleted");
-                            }
-                            else
-                            {
-                                await context.Response.WriteAsync(Reason);
-                            }
+                            dbcontext.Set<TE>().RemoveRange(recivedDataL);
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            await dbcontext.SaveChangesAsync();
+                            await context.Response.WriteAsync("Deleted");
                         }
-                        // Do something
+                        else
+                        {
+                            await context.Response.WriteAsync(Reason);
+                        }
                     }
+                    // Do something
                 }
             }
         };
