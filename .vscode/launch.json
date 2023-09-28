@@ -9,7 +9,7 @@
            "type": "coreclr",
            "request": "launch",
            "preLaunchTask": "build-test",
-           "program": "${workspaceFolder}/test/ControllerTests/bin/Debug/net6.0/ControllerTests.dll",
+           "program": "${workspaceFolder}/test/ControllerTests/bin/Debug/net7.0/ControllerTests.dll",
            "args": [],
            "cwd": "${workspaceFolder}/test/ControllerTests",
            "stopAtEntry": false,
@@ -30,7 +30,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/samples/webapi/bin/Debug/net6.0/webapi.dll",
+            "program": "${workspaceFolder}/samples/webapi/bin/Debug/net7.0/webapi.dll",
             "args": [],
             "cwd": "${workspaceFolder}/samples/webapi",
             "stopAtEntry": false,
