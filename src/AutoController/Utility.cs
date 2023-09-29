@@ -77,7 +77,7 @@ public static class Utility
     /// </summary>
     public static IQueryable<TSource> Where<TSource>(this IQueryable<TSource> source, string expression)
     {
-        var p = (String.IsNullOrWhiteSpace(expression)) ? GetEmptyPredicate<TSource>() : GetPredicate<TSource>(expression);
+        var p = string.IsNullOrWhiteSpace(expression) ? GetEmptyPredicate<TSource>() : GetPredicate<TSource>(expression);
         return source.Where<TSource>(p).AsQueryable();
     }
 }

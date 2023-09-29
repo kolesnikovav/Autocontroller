@@ -2,11 +2,9 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AutoController;
@@ -33,17 +31,17 @@ public static class AccessHelper
         bool result = false;
         foreach (var r in restrictions)
         {
-            if (!String.IsNullOrWhiteSpace(r.Roles))
+            if (!string.IsNullOrWhiteSpace(r.Roles))
             {
-                var roles = r.Roles.IndexOf(",") == -1 ? new string[] { r.Roles } : r.Roles.Split(",").Where(v => !String.IsNullOrWhiteSpace(v));
+                var roles = r.Roles.IndexOf(",") == -1 ? new string[] { r.Roles } : r.Roles.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
                 foreach (var rL in roles)
                 {
                     if (context.User.IsInRole(rL)) return true; // success
                 }
             }
-            if (!String.IsNullOrWhiteSpace(r.Policy))
+            if (!string.IsNullOrWhiteSpace(r.Policy))
             {
-                var policies = r.Policy.IndexOf(",") == -1 ? new string[] { r.Policy } : r.Policy.Split(",").Where(v => !String.IsNullOrWhiteSpace(v));
+                var policies = r.Policy.IndexOf(",") == -1 ? new string[] { r.Policy } : r.Policy.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
                 var serv = context.RequestServices.GetServices<IAuthorizationService>();
                 foreach (var w in serv)
                 {

@@ -163,11 +163,10 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         foreach (PropertyInfo pInfo in givenType.GetProperties())
         {
             MapToControllerGetParamAttribute b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
-            KeyAttribute k = pInfo.GetCustomAttribute(KeyAttributeType) as KeyAttribute;
             if (b != null)
             {
-                string r = String.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-                string optional = b.Optional ? "?" : String.Empty;
+                string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
+                string optional = b.Optional ? "?" : string.Empty;
                 string route = routeClassName + "/{" + r + optional + "}";
                 //"{controller}/{action}/{property?}"
                 RouteKey rkey = new RouteKey() { Path = route, HttpMethod = HttpMethod.Get };
@@ -175,21 +174,21 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                     rkey,
                     new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
                     );
-                LogInformation(String.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
+                LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
 
             }
-            if (k != null)
+            if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
             {
                 EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
-                string r = String.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
+                string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
                 string route = routeClassName + "/{" + r + "}";
                 //"{controller}/{action}/{property}"
-                RouteKey rkey = new RouteKey() { Path = route, HttpMethod = HttpMethod.Post };
+                RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
                 _autoroutes.Add(
                     rkey,
                     new RouteParameters() { EntityType = pInfo.PropertyType }
                     );
-                LogInformation(String.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
+                LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
             }
         }
     }
@@ -259,8 +258,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         string basePath = _startRoutePath + controllerName;
         string countPath = basePath + "/" + _defaultGetCountAction;
         string defaultPath = basePath + "/" + _defaultGetAction;
-        RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Get };
-        RouteKey rkeyCount = new RouteKey() { Path = countPath, HttpMethod = HttpMethod.Get };
+        RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Get };
+        RouteKey rkeyCount = new() { Path = countPath, HttpMethod = HttpMethod.Get };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new RouteParameters
@@ -287,7 +286,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         }
         if (!_autoroutes.ContainsKey(rkeyCount))
         {
-            RouteParameters rParam = new RouteParameters
+            RouteParameters rParam = new()
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("GetCountOf",
@@ -315,7 +314,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
-            RouteParameters rParam = new RouteParameters
+            RouteParameters rParam = new()
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("PostHandler",
@@ -344,7 +343,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
-            RouteParameters rParam = new RouteParameters
+            RouteParameters rParam = new()
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("DeleteHandler",
@@ -369,10 +368,10 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultUpdateAction;
-        RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Put };
+        RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Put };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
-            RouteParameters rParam = new RouteParameters
+            RouteParameters rParam = new()
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("PostHandler",
@@ -436,8 +435,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             PropertyInfo[] p = givenType.GetProperties();
             foreach (PropertyInfo t in p)
             {
-                KeyAttribute k = t.GetCustomAttribute(KeyAttributeType) as KeyAttribute;
-                if (k != null)
+                if (t.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
                 {
                     EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = t.Name, KeyType = t.PropertyType });
                 }
