@@ -93,7 +93,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// </summary>
     public Dictionary<RouteKey, RouteParameters> Autoroutes
     {
-        get => this._autoroutes;
+        get => _autoroutes;
     }
     /// <summary>
     /// Returns current options for external use

@@ -383,74 +383,19 @@ internal static class Handler
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            if (interactingType == InteractingType.JSON)
             {
-                if (interactingType == InteractingType.JSON)
+                using var reader = new StreamReader(context.Request.Body);
+                var body = await reader.ReadToEndAsync();
+                try
                 {
-                    using (var reader = new StreamReader(context.Request.Body))
+                    recivedData = JsonSerializer.Deserialize<TE>(body);
+                    if (recivedData != null)
                     {
-                        var body = await reader.ReadToEndAsync();
-                        try
+                        if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                         {
-                            recivedData = JsonSerializer.Deserialize<TE>(body);
-                            if (recivedData != null)
-                            {
-                                if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
-                                {
-                                    dbcontext.Set<TE>().Remove(recivedData);
-                                    DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                    await dbcontext.SaveChangesAsync();
-                                    await context.Response.WriteAsync("Deleted");
-                                }
-                                else
-                                {
-                                    await context.Response.WriteAsync(Reason);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            // It can be array
-                            try
-                            {
-                                recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
-                                if (recivedDataList != null)
-                                {
-                                    if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
-                                    {
-                                        dbcontext.Set<TE>().RemoveRange(recivedDataList);
-                                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
-                                        await dbcontext.SaveChangesAsync();
-                                        await context.Response.WriteAsync("Deleted");
-                                    }
-                                    else
-                                    {
-                                        await context.Response.WriteAsync(Reason);
-                                    }
-                                }
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                    }
-                }
-                else if (interactingType == InteractingType.XML)
-                {
-                    using var reader = new StreamReader(context.Request.Body);
-                    var body = await reader.ReadToEndAsync();
-
-                    Stream stream = GenerateStreamFromString(body);
-                    XmlRootAttribute a = new("result");
-                    XmlSerializer serializer = new(typeof(List<TE>), a);
-                    var recivedDataL = (List<TE>)serializer.Deserialize(stream);
-                    await stream.DisposeAsync();
-                    if (recivedDataL != null && recivedDataL.Count > 0)
-                    {
-                        if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
-                        {
-                            dbcontext.Set<TE>().RemoveRange(recivedDataL);
+                            dbcontext.Set<TE>().Remove(recivedData);
                             DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                             await dbcontext.SaveChangesAsync();
                             await context.Response.WriteAsync("Deleted");
@@ -460,18 +405,65 @@ internal static class Handler
                             await context.Response.WriteAsync(Reason);
                         }
                     }
-                    // Do something
                 }
+                catch
+                {
+                    // It can be array
+                    try
+                    {
+                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        if (recivedDataList != null)
+                        {
+                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            {
+                                dbcontext.Set<TE>().RemoveRange(recivedDataList);
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                await dbcontext.SaveChangesAsync();
+                                await context.Response.WriteAsync("Deleted");
+                            }
+                            else
+                            {
+                                await context.Response.WriteAsync(Reason);
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            else if (interactingType == InteractingType.XML)
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var body = await reader.ReadToEndAsync();
+
+                Stream stream = GenerateStreamFromString(body);
+                XmlRootAttribute a = new("result");
+                XmlSerializer serializer = new(typeof(List<TE>), a);
+                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                await stream.DisposeAsync();
+                if (recivedDataL != null && recivedDataL.Count > 0)
+                {
+                    if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
+                    {
+                        dbcontext.Set<TE>().RemoveRange(recivedDataL);
+                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        await dbcontext.SaveChangesAsync();
+                        await context.Response.WriteAsync("Deleted");
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync(Reason);
+                    }
+                }
+                // Do something
             }
         };
     }
     private static MethodInfo GetGenericMethod(string name, Type[] types)
     {
-        MethodInfo mi = typeof(Handler).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(v => v.Name == name).FirstOrDefault();
-        if (mi == null)
-        {
-            throw (new ArgumentException("Method " + name + " does not exists", "name"));
-        }
+        MethodInfo mi = typeof(Handler).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(v => v.Name == name).FirstOrDefault() ?? throw (new ArgumentException("Method " + name + " does not exists", "name"));
         MethodInfo miGeneric = mi.MakeGenericMethod(types);
         return miGeneric;
     }

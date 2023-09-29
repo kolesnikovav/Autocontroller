@@ -24,7 +24,7 @@ public struct EntityKeyDescribtion
     /// <summary>
     /// Retrives parameter expression from this describtion for use in Linq queries
     /// </summary>
-    public ParameterExpression GetParameter()
+    public readonly ParameterExpression GetParameter()
     {
         return Expression.Parameter(KeyType, "x");
     }
