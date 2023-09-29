@@ -44,7 +44,16 @@
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
-            }
+            },
+            "justMyCode": false,
+            "symbolOptions": {
+                "searchMicrosoftSymbolServer": true, // get pdb files from ms symbol server
+                "searchNuGetOrgSymbolServer": true,
+                "moduleFilter": {
+                    "mode": "loadAllButExcluded",
+                    "excludedModules": []
+                }
+            },            
         },
         {
             "name": ".NET Core Attach",

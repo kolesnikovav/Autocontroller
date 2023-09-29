@@ -29,7 +29,7 @@ public class Startup
         services.AddDbContext<ApplicationDBContext>(options =>
             options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
-        services.AddEndpointsApiExplorer();
+        services.AddAutoControllerApiExplorer();
         services.AddSwaggerGen();
     }
 
