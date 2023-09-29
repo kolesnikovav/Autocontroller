@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<PackageId>AutoController</PackageId>
-		<Version>1.0.7</Version>
+		<Version>1.0.8</Version>
 		<Authors>Aleksandr Kolesnikov</Authors>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<AssemblyName>AutoController</AssemblyName>
@@ -32,15 +32,15 @@
 	</PropertyGroup>
 	<ItemGroup/>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="6.0.1"/>
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1"/>
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="7.0.11"/>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.11"/>
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.1"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.1"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1"/>
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.2"/>
-		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.0"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.11"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.11"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.11"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11"/>
+		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.4"/>
 		<PackageReference Include="System.Net.Http" Version="4.3.4"/>
 		<PackageReference Include="MySql.EntityFrameworkCore" Version="5.0.8+MySQL8.0.27"/>
 	</ItemGroup>
