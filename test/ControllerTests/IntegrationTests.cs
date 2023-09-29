@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using AppExample;
 using DbContextExample;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Xml.Serialization;
 using System.IO;
@@ -17,8 +16,8 @@ namespace AutocontrollerTests;
 
 public class IntegrationTests : IClassFixture<WebApplicationFactory<Startup>>
 {
-    private readonly WebApplicationFactory<AppExample.Startup> _factory;
-    public IntegrationTests(WebApplicationFactory<AppExample.Startup> factory)
+    private readonly WebApplicationFactory<Startup> _factory;
+    public IntegrationTests(WebApplicationFactory<Startup> factory)
     {
         _factory = factory;
         // database seeding
@@ -64,8 +63,8 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Startup>>
         using (var reader = new StreamReader(defaultPage.Content.ReadAsStream()))
         {
             var body = await reader.ReadToEndAsync();
-            var recivedData = JsonSerializer.Deserialize<List<DbContextExample.Blog>>(body);
-            Assert.Equal(3, recivedData.Count);
+            var recivedData = JsonSerializer.Deserialize<List<Blog>>(body);
+            Assert.Equal(3, recivedData?.Count);
             //Assert.Contains<DbContextExample.Blog>( new Blog { Id = 1, Description = "Test blog1"}, recivedData);
         }
 
@@ -73,10 +72,10 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Startup>>
         using (var reader = new StreamReader(defaultPage2.Content.ReadAsStream()))
         {
             // Stream stream = GenerateStreamFromString(body);
-            XmlRootAttribute a = new XmlRootAttribute("result");
-            XmlSerializer serializer = new XmlSerializer(typeof(List<DbContextExample.Blog>), a);
-            List<DbContextExample.Blog> recivedDataL = (List<DbContextExample.Blog>)serializer.Deserialize(reader);
-            Assert.Equal(3, recivedDataL.Count);
+            XmlRootAttribute a = new("result");
+            XmlSerializer serializer = new XmlSerializer(typeof(List<Blog>), a);
+            var recivedDataL = (List<Blog>?)serializer.Deserialize(reader);
+            Assert.Equal(3, recivedDataL?.Count);
         }
     }
 
@@ -106,22 +105,22 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Startup>>
         Assert.Equal(HttpStatusCode.OK, defaultPagePost3.StatusCode);
 
         var countApi = await defaultPage.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApi));
+        Assert.Equal(3, int.Parse(countApi));
         var countApi2 = await defaultPage2.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApi2));
+        Assert.Equal(3, int.Parse(countApi2));
         var countApi3 = await defaultPage3.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApi3));
+        Assert.Equal(3, int.Parse(countApi3));
 
         var countApiPost = await defaultPagePost.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApiPost));
+        Assert.Equal(3, int.Parse(countApiPost));
         var countApiPost2 = await defaultPagePost2.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApiPost2));
+        Assert.Equal(3, int.Parse(countApiPost2));
         var countApiPost3 = await defaultPagePost3.Content.ReadAsStringAsync();
-        Assert.Equal(3, Int32.Parse(countApiPost3));
+        Assert.Equal(3, int.Parse(countApiPost3));
 
         var countApiWithFilter = await defaultPageWithFilter.Content.ReadAsStringAsync();
-        Assert.Equal(1, Int32.Parse(countApiWithFilter));
+        Assert.Equal(1, int.Parse(countApiWithFilter));
         var countApiWithFilter2 = await defaultPageWithFilter2.Content.ReadAsStringAsync();
-        Assert.Equal(2, Int32.Parse(countApiWithFilter2));
+        Assert.Equal(2, int.Parse(countApiWithFilter2));
     }
 }

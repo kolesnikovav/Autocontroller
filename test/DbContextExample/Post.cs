@@ -3,13 +3,13 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
 
-namespace DbContextExample
+namespace DbContextExample;
+
+[MapToController("Posts", InteractingType.JSON, 25, false)]
+public class Post
 {
-    [MapToController("Posts", InteractingType.JSON, 25, false)]
-    public class Post
-    {
-        [Key]
-        public int Id { get; set; }
-        public string Content { get; set; }
-    }
+    [Key]
+    public int Id { get; set; }
+    public string Content { get; set; }
 }
+
