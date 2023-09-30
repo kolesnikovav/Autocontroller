@@ -58,6 +58,15 @@ public static class AutoControllerExtention
         var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
+    private static void MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, string pattern, RequestDelegate handler) 
+    {
+        //endpointRouteBuilder.MapGet(pattern,handler).WithMetadata();.Name
+        
+    }
+
+
+
+
     private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
     {
         var routeHandler = new RouteHandler(parameters.Handler);

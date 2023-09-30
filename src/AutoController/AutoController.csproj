@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
+		<LangVersion>11.0</LangVersion>
 		<PackageId>AutoController</PackageId>
 		<Version>1.0.8</Version>
 		<Authors>Aleksandr Kolesnikov</Authors>
@@ -43,5 +44,6 @@
 		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.4"/>
 		<PackageReference Include="System.Net.Http" Version="4.3.4"/>
 		<PackageReference Include="MySql.EntityFrameworkCore" Version="5.0.8+MySQL8.0.27"/>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 </Project>
