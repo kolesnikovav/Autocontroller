@@ -58,10 +58,21 @@ public static class AutoControllerExtention
         var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
-    private static void MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, string pattern, RequestDelegate handler) 
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler) 
     {
-        //endpointRouteBuilder.MapGet(pattern,handler).WithMetadata();.Name
-        
+        if (key.HttpMethod == HttpMethod.Get)
+        {
+           return endpointRouteBuilder.MapGet(key.Path,handler).WithDescription("gadfgadfg"); 
+        }
+        else if (key.HttpMethod == HttpMethod.Post)
+        {
+            return endpointRouteBuilder.MapPost(key.Path,handler).WithDescription("gadfgadfg");
+        }
+        else if (key.HttpMethod == HttpMethod.Patch)
+        {
+            return endpointRouteBuilder.MapPatch(key.Path,handler).WithDescription("gadfgadfg");
+        }
+        return endpointRouteBuilder.MapGet(key.Path,handler).WithDescription("gadfgadfg");         
     }
 
 
@@ -69,10 +80,14 @@ public static class AutoControllerExtention
 
     private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
     {
-        var routeHandler = new RouteHandler(parameters.Handler);
-        var routeBuilder = new RouteBuilder(builder, routeHandler);
-        routeBuilder.MapRoute(key.ToString(), key.Path);
-        builder.UseRouter(routeBuilder.Build());
+        builder.UseEndpoints(e => 
+        {
+            e.MapAutoRoute(key,parameters.Handler);
+        });
+        // var routeHandler = new RouteHandler(parameters.Handler);
+        // var routeBuilder = new RouteBuilder(builder, routeHandler);
+        // routeBuilder.MapRoute(key.ToString(), key.Path);
+        // builder.UseRouter(routeBuilder.Build());
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
