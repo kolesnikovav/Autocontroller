@@ -58,12 +58,41 @@ public static class AutoControllerExtention
         var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler) 
+    {
+        IEndpointConventionBuilder result;
+        if (key.HttpMethod == HttpMethod.Get)
+        {
+           result =  endpointRouteBuilder.MapGet(key.Path,handler); 
+        }
+        else if (key.HttpMethod == HttpMethod.Post)
+        {
+            result =  endpointRouteBuilder.MapPost(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Patch)
+        {
+            result = endpointRouteBuilder.MapPatch(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Delete)
+        {
+            result = endpointRouteBuilder.MapDelete(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Put)
+        {
+            result = endpointRouteBuilder.MapPut(key.Path,handler);
+        } 
+        else
+        {
+            result =  endpointRouteBuilder.MapGet(key.Path,handler);
+        }
+        return result.WithName(key.ToString()); 
+    }    
     private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
     {
-        var routeHandler = new RouteHandler(parameters.Handler);
-        var routeBuilder = new RouteBuilder(builder, routeHandler);
-        routeBuilder.MapRoute(key.ToString(), key.Path);
-        builder.UseRouter(routeBuilder.Build());
+        builder.UseEndpoints(e => 
+        {
+            e.MapAutoRoute(key,parameters.Handler);
+        });
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
@@ -140,10 +169,10 @@ public static class AutoControllerExtention
             DefaultPageParameter,
             DefaultItemsPerPageParameter,
             DefaultUpdateAction);
-        foreach (var route in autoRouter.Autoroutes)
-        {
-            AddRoute(appBuilder, route.Key, route.Value);
-        }
+        // foreach (var route in autoRouter.Autoroutes)
+        // {
+        //     AddRoute(appBuilder, route.Key, route.Value);
+        // }
     }
     /// <summary>
     /// Adds autocontroller for DBContext.

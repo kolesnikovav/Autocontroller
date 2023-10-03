@@ -35,6 +35,15 @@ public class RouteKey
     {
         return HttpMethod.ToString() + " " + Path;
     }
+    /// <summary>
+    /// Equality checker for RouteKey
+    /// </summary>
+    /// <param name="obj">anover route key</param>
+    /// <returns></returns>
+    public bool Equals(RouteKey obj)
+    {
+        return HttpMethod.Equals(obj.HttpMethod) && Path.Equals(obj.Path);
+    }
 }
 /// <summary>
 /// Route parameter for handling request
@@ -61,14 +70,10 @@ public class RouteParameters
 public class AutoRouterService<T> where T : DbContext, IDisposable
 {
     #region static members
-    private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions =
-                   new();
-    private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
-                   new();
-    private static readonly Dictionary<string, IAutoControllerOptions> ApiOptions =
-                   new();
-    private static readonly Dictionary<Type, MapToControllerAttribute> ControllerNames =
-                   new();
+    private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions = new();
+    private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys = new();
+    private static readonly Dictionary<string, IAutoControllerOptions> ApiOptions = new();
+    private static readonly Dictionary<Type, MapToControllerAttribute> ControllerNames = new();
     private static readonly Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
     private static readonly Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
     private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
@@ -86,7 +91,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <summary>
     /// The Dictionary with all used routes
     /// </summary>
-    private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+    private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new();
 
     /// <summary>
     /// The Dictionary with all used routes

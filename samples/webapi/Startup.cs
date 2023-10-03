@@ -44,11 +44,13 @@ public class Startup
         {
             WriteIndented = true
         };
+        app.UseRouting();
+
         app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
         app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
         app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
 
-        app.UseRouting();
+        
 
         app.UseEndpoints(endpoints =>
         {
