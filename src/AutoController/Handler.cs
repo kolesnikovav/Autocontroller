@@ -18,11 +18,11 @@ using System.Linq.Dynamic;
 namespace AutoController;
 internal static class Handler
 {
-    private static MethodInfo GetActionBeforeSave<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeSave<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeSave", new Type[] { typeof(DbContext), typeof(string) });
     }
-    private static MethodInfo GetActionBeforeDelete<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeDelete<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeDelete", new Type[] { typeof(DbContext), typeof(string) });
     }
@@ -37,13 +37,13 @@ internal static class Handler
             default: return InMemoryProvider<T>.GetBuilder(connString);
         }
     }
-    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T> factory = null) where T : DbContext, IDisposable
+    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
         var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
 
         var options = optionsBuilder.Options;
-        return (T)Activator.CreateInstance(typeof(T), new object[] { options });
+        return (T)Activator.CreateInstance(typeof(T), new object[] { options })!;
     }
 
     private static Stream GenerateStreamFromString(string s)
@@ -133,8 +133,8 @@ internal static class Handler
         string authentificationPath,
         string accessDeniedPath,
         Dictionary<string, RequestParamName> _requestParams,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -178,7 +178,7 @@ internal static class Handler
                                                      string authentificationPath,
                                                      string accessDeniedPath,
                                                      Dictionary<string, RequestParamName> requestParams,
-                                                     Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+                                                     Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
                                                                                                         where TE : class
     {
         return async (context) =>
@@ -198,19 +198,23 @@ internal static class Handler
             await context.Response.WriteAsync(queryResult.ToString());
         };
     }
-    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
         if (methodInfo == null) return result;
         object[] p = new object[] { dbcontext, reason };
-        result = (bool)methodInfo.Invoke(recivedObject, p);
+        var mResult = methodInfo!.Invoke(recivedObject, p) ?? true;
+        result = (bool)mResult;
+        if (result) return result;
         reason += (string)p[1];
         return result;
     }
-    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
@@ -218,12 +222,13 @@ internal static class Handler
         object[] p = new object[] { dbcontext, reason };
         foreach (TE el in recivedObjects)
         {
-            result = (bool)methodInfo.Invoke(el, p) && result;
+            var mResult = methodInfo!.Invoke(el, p) ?? true;
+            result = (bool)mResult && result;
             reason += (string)p[1] + "\n";
         }
         return result;
     }
-    private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[] parameters = null) where T : DbContext, IDisposable
+    private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[]? parameters = null) where T : DbContext, IDisposable
     {
         if (method == null) return;
         method.Invoke(context, parameters);
@@ -237,9 +242,9 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -366,9 +371,9 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -477,6 +482,8 @@ internal static class Handler
     /// <param name="args">The arguments for invoked method</param>
     public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
     {
-        return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args);
+        var a = GetGenericMethod(name, types).Invoke(instance, args);
+        if (a == null) return null!;
+        return (RequestDelegate)a!;
     }
 }

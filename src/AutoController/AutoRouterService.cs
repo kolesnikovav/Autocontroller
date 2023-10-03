@@ -272,14 +272,20 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    private void AddGetRoutesForEntity(string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
+    private void AddGetRoutesForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
     {
         string basePath = _startRoutePath + controllerName;
         string countPath = basePath + "/" + _defaultGetCountAction;
         string defaultPath = basePath + "/" + _defaultGetAction;
+        var apiRoutes = GetAutoroutes(api_prefix);
+        if (apiRoutes == null)
+        {
+            apiRoutes = new Dictionary<RouteKey, RouteParameters>();
+            _autoroutes.Add(api_prefix, apiRoutes);
+        }        
         RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Get };
         RouteKey rkeyCount = new() { Path = countPath, HttpMethod = HttpMethod.Get };
-        if (!_autoroutes.ContainsKey(rkeyDefault))
+        if (!apiRoutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
             {
@@ -300,10 +306,10 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                              _jsonOptions,
                                                              _dbContextFactory })
             };
-            _autoroutes.Add(rkeyDefault, rParam);
+            apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
-        if (!_autoroutes.ContainsKey(rkeyCount))
+        if (!apiRoutes.ContainsKey(rkeyCount))
         {
             RouteParameters rParam = new()
             {
@@ -322,16 +328,22 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                             _requestParams,
                                                             _dbContextFactory })
             };
-            _autoroutes.Add(rkeyCount, rParam);
+            apiRoutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
         }
     }
-    private void AddPostRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddPostRouteForEntity(string api_prefix,string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultPostAction;
+        var apiRoutes = GetAutoroutes(api_prefix);
+        if (apiRoutes == null)
+        {
+            apiRoutes = new Dictionary<RouteKey, RouteParameters>();
+            _autoroutes.Add(api_prefix, apiRoutes);
+        }        
         RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Post };
-        if (!_autoroutes.ContainsKey(rkeyDefault))
+        if (!apiRoutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
             {
@@ -351,16 +363,22 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
-            _autoroutes.Add(rkeyDefault, rParam);
+            apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddDeleteRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddDeleteRouteForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultDeleteAction;
+        var apiRoutes = GetAutoroutes(api_prefix);
+        if (apiRoutes == null)
+        {
+            apiRoutes = new Dictionary<RouteKey, RouteParameters>();
+            _autoroutes.Add(api_prefix, apiRoutes);
+        }        
         RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Delete };
-        if (!_autoroutes.ContainsKey(rkeyDefault))
+        if (!apiRoutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
             {
@@ -379,16 +397,23 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
-            _autoroutes.Add(rkeyDefault, rParam);
+            apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddUpdateRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddUpdateRouteForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultUpdateAction;
+        var apiRoutes = GetAutoroutes(api_prefix);
+        if (apiRoutes == null)
+        {
+            apiRoutes = new Dictionary<RouteKey, RouteParameters>();
+            _autoroutes.Add(api_prefix, apiRoutes);
+        }
+
         RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Put };
-        if (!_autoroutes.ContainsKey(rkeyDefault))
+        if (!apiRoutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
             {
@@ -408,7 +433,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
-            _autoroutes.Add(rkeyDefault, rParam);
+            apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
@@ -436,15 +461,15 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    private void CreateRoutes()
+    private void CreateRoutes(string api_prefix)
     {
         foreach (var c in ControllerNames)
         {
             InteractingType usedInteractingType = _defaultInteractingType == null ? c.Value.InteractingType : (InteractingType)_defaultInteractingType;
-            AddGetRoutesForEntity(c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
-            AddPostRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
-            AddDeleteRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
-            AddUpdateRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
+            AddGetRoutesForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
+            AddPostRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddDeleteRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddUpdateRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
         }
     }
     private static void RetriveEntityKeys(Type givenType)
@@ -560,7 +585,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 AccessDeniedPath = _accessDeniedPath
             });
         }
-        CreateRoutes();
+        CreateRoutes(_routePrefix);
     }
     /// <summary>
     /// Create routes for each marked entity type
@@ -644,7 +669,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 AccessDeniedPath = _accessDeniedPath
             });
         }
-        CreateRoutes();
+        CreateRoutes(_routePrefix);
     }
     /// <summary>
     /// Retrive request response schema assosiated with api route prefix
