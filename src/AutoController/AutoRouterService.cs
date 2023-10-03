@@ -91,15 +91,27 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <summary>
     /// The Dictionary with all used routes
     /// </summary>
-    private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new();
-
+    private readonly Dictionary<string,Dictionary<RouteKey, RouteParameters>> _autoroutes = new();
     /// <summary>
     /// The Dictionary with all used routes
+    /// first key - api prefix
     /// </summary>
-    public Dictionary<RouteKey, RouteParameters> Autoroutes
+    public Dictionary<string,Dictionary<RouteKey, RouteParameters>> Autoroutes
     {
         get => _autoroutes;
     }
+    /// <summary>
+    /// GetAutoroutes by api prefix
+    /// </summary>
+    /// <param name="api_prefix"></param>
+    /// <returns></returns> 
+    /// <summary>
+    public Dictionary<RouteKey, RouteParameters>? GetAutoroutes(string api_prefix)
+    {
+        return _autoroutes[api_prefix] ?? null;
+    }
+
+
     /// <summary>
     /// Returns current options for external use
     /// </summary>
@@ -131,7 +143,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private string _routePrefix;
     private string _startRoutePath;
     private InteractingType? _defaultInteractingType;
-    private JsonSerializerOptions _jsonOptions;
+    private JsonSerializerOptions? _jsonOptions;
     private ILogger logger;
 
     private string _authentificationPath;
@@ -172,6 +184,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 string route = routeClassName + "/{" + r + optional + "}";
                 //"{controller}/{action}/{property?}"
                 RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Get };
+
+                var api_route = new Dictionary<RouteKey,RouteParameters>(){rkey,new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }};
+
+
+
                 _autoroutes.Add(
                     rkey,
                     new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
@@ -399,7 +416,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         if (givenType.IsClass)
         {
-            MapToControllerAttribute r = (MapToControllerAttribute)givenType.GetCustomAttribute(MapToControllerAttributeType);
+            MapToControllerAttribute? r = (MapToControllerAttribute)givenType?.GetCustomAttribute(MapToControllerAttributeType);
             if (r != null)
             {
                 if (!ControllerNames.ContainsKey(givenType))
@@ -482,7 +499,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
+        JsonSerializerOptions? jsonSerializerOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -568,7 +585,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
+        JsonSerializerOptions? jsonSerializerOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -633,7 +650,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// Retrive request response schema assosiated with api route prefix
     /// </summary>
     /// <param name="prefix">Route prefix</param>
-    public static IAutoControllerOptions GetOptions(string prefix)
+    public static IAutoControllerOptions? GetOptions(string prefix)
     {
         if (!ApiOptions.ContainsKey(prefix)) return null;
         return ApiOptions[prefix];

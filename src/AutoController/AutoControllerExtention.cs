@@ -58,7 +58,7 @@ public static class AutoControllerExtention
         var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
-    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler) 
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix) 
     {
         IEndpointConventionBuilder result;
         if (key.HttpMethod == HttpMethod.Get)
@@ -87,11 +87,11 @@ public static class AutoControllerExtention
         }
         return result.WithName(key.ToString()); 
     }    
-    private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
+    private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters)
     {
         builder.UseEndpoints(e => 
         {
-            e.MapAutoRoute(key,parameters.Handler);
+            e.MapAutoRoute(key,parameters.Handler, api_prefix);
         });
     }
     /// <summary>
@@ -128,7 +128,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -169,10 +169,13 @@ public static class AutoControllerExtention
             DefaultPageParameter,
             DefaultItemsPerPageParameter,
             DefaultUpdateAction);
-        // foreach (var route in autoRouter.Autoroutes)
-        // {
-        //     AddRoute(appBuilder, route.Key, route.Value);
-        // }
+         foreach (var route in autoRouter.Autoroutes)
+         {
+            foreach(var v in route.Value) 
+            {
+                AddRoute(appBuilder, route.Key, v.Key, v.Value);
+            }
+         }
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
@@ -203,7 +206,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -244,7 +247,10 @@ public static class AutoControllerExtention
             DefaultUpdateAction);
         foreach (var route in autoRouter.Autoroutes)
         {
-            AddRoute(appBuilder, route.Key, route.Value);
+            foreach (var v in route.Value)
+            {
+                AddRoute(appBuilder, route.Key, v.Key, v.Value);
+            }
         }
     }
     /// <summary>

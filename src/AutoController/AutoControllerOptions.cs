@@ -70,7 +70,7 @@ public class AutoControllerOptions : IAutoControllerOptions
     /// <summary>
     /// Options for json serialization and deserialization
     /// </summary>
-    public JsonSerializerOptions JsonSerializerOptions { get; set; }
+    public JsonSerializerOptions? JsonSerializerOptions { get; set; }
     /// <summary>
     /// Autentification page path
     /// </summary>
