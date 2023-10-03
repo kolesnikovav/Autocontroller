@@ -62,13 +62,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
 {
     #region static members
     private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions =
-                   new Dictionary<string, List<AuthorizeAttribute>>();
+                   new();
     private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
-                   new Dictionary<Type, EntityKeyDescribtion>();
+                   new();
     private static readonly Dictionary<string, IAutoControllerOptions> ApiOptions =
-                   new Dictionary<string, IAutoControllerOptions>();
+                   new();
     private static readonly Dictionary<Type, MapToControllerAttribute> ControllerNames =
-                   new Dictionary<Type, MapToControllerAttribute>();
+                   new();
     private static readonly Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
     private static readonly Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
     private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
@@ -93,7 +93,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// </summary>
     public Dictionary<RouteKey, RouteParameters> Autoroutes
     {
-        get => this._autoroutes;
+        get => _autoroutes;
     }
     /// <summary>
     /// Returns current options for external use
@@ -144,10 +144,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private Dictionary<string, RequestParamName> _requestParams;
     private void LogInformation(string message)
     {
-        if (logger != null)
-        {
-            logger.LogInformation(message);
-        }
+        logger?.LogInformation(message);
     }
 
     /// <summary>
@@ -169,7 +166,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 string optional = b.Optional ? "?" : string.Empty;
                 string route = routeClassName + "/{" + r + optional + "}";
                 //"{controller}/{action}/{property?}"
-                RouteKey rkey = new RouteKey() { Path = route, HttpMethod = HttpMethod.Get };
+                RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Get };
                 _autoroutes.Add(
                     rkey,
                     new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
@@ -262,7 +259,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         RouteKey rkeyCount = new() { Path = countPath, HttpMethod = HttpMethod.Get };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
-            RouteParameters rParam = new RouteParameters
+            RouteParameters rParam = new()
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("GetHandler",
@@ -311,7 +308,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultPostAction;
-        RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Post };
+        RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Post };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
@@ -340,7 +337,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultDeleteAction;
-        RouteKey rkeyDefault = new RouteKey() { Path = defaultPath, HttpMethod = HttpMethod.Delete };
+        RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Delete };
         if (!_autoroutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
