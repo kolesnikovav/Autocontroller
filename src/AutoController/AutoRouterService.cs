@@ -132,45 +132,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         this.logger = logger;
     }
-    // private void AddRoutesForProperties(Type givenType, string routeClassName, uint itemsPerPage)
-    // {
-    //     // foreach (PropertyInfo pInfo in givenType.GetProperties())
-    //     // {
-    //     //     MapToControllerGetParamAttribute? b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
-    //     //     if (b != null)
-    //     //     {
-    //     //         string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-    //     //         string optional = b.Optional ? "?" : string.Empty;
-    //     //         string route = routeClassName + "/{" + r + optional + "}";
-    //     //         //"{controller}/{action}/{property?}"
-    //     //         RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Get };
-
-    //     //         var api_route = new Dictionary<RouteKey,RouteParameters>(){rkey,new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }};
-
-
-
-    //     //         _autoroutes.Add(
-    //     //             rkey,
-    //     //             new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
-    //     //             );
-    //     //         LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
-
-    //     //     }
-    //     //     if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
-    //     //     {
-    //     //         EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
-    //     //         string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-    //     //         string route = routeClassName + "/{" + r + "}";
-    //     //         //"{controller}/{action}/{property}"
-    //     //         RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
-    //     //         _autoroutes.Add(
-    //     //             rkey,
-    //     //             new RouteParameters() { EntityType = pInfo.PropertyType }
-    //     //             );
-    //     //         LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
-    //     //     }
-    //     // }
-    // }
+ 
     private static void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
     {
         string AKey = AccessHelper.GetAccessKey(givenType, null, httpMethod);
@@ -253,10 +215,6 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
               autoControllerOptions.DefaultSortParameter,
               autoControllerOptions.DefaultSortDirectionParameter
             );
-        // Create(string page, string size, string filter, string sort, string sortdirection)
-
-
-
 
         if (!apiRoutes.ContainsKey(rkeyDefault))
         {
