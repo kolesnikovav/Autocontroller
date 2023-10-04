@@ -80,7 +80,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private static readonly Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
     private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
     private static readonly Type KeyAttributeType = typeof(KeyAttribute);
-    private static string _connectionString;
+    private static string? _connectionString;
     private static MethodInfo _dbContextBeforeSaveChangesMethod;
     private static Func<T> _dbContextFactory;
     /// <summary>
@@ -176,7 +176,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         foreach (PropertyInfo pInfo in givenType.GetProperties())
         {
-            MapToControllerGetParamAttribute b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
+            MapToControllerGetParamAttribute? b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
             if (b != null)
             {
                 string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
@@ -441,19 +441,20 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         if (givenType.IsClass)
         {
-            MapToControllerAttribute? r = (MapToControllerAttribute)givenType?.GetCustomAttribute(MapToControllerAttributeType);
+            var rAttr = givenType?.GetCustomAttribute(MapToControllerAttributeType);
+            MapToControllerAttribute? r = rAttr == null ? null : (MapToControllerAttribute)rAttr;
             if (r != null)
             {
-                if (!ControllerNames.ContainsKey(givenType))
+                if (!ControllerNames.ContainsKey(givenType!))
                 {
-                    ControllerNames.Add(givenType, r);
+                    ControllerNames.Add(givenType!, r);
                 }
-                ProccessRestrictions(givenType, HttpMethod.Get);
-                ProccessRestrictions(givenType, HttpMethod.Post);
-                ProccessRestrictions(givenType, HttpMethod.Delete);
+                ProccessRestrictions(givenType!, HttpMethod.Get);
+                ProccessRestrictions(givenType!, HttpMethod.Post);
+                ProccessRestrictions(givenType!, HttpMethod.Delete);
             }
         }
-        if (givenType.IsGenericType)
+        if (givenType!.IsGenericType)
         {
             foreach (Type currentType in givenType.GetGenericArguments())
             {
