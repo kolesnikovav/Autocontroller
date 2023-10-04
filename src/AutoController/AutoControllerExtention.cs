@@ -12,7 +12,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.OpenApi;
 
 
 namespace AutoController;
@@ -87,15 +88,17 @@ public static class AutoControllerExtention
         {
             result =  endpointRouteBuilder.MapGet(key.Path,handler);
         }
-        return result.WithName(key.Path); 
+        return result
+        .WithName(key.Path)
+        .WithDescription(key.ToString())
+        .WithMetadata(new SwaggerOperationAttribute("summary001", "description001"))
+        .WithOpenApi(); 
     }    
     private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters)
     {
         builder.UseEndpoints(e => 
         {
             e.MapAutoRoute(key,parameters.Handler, api_prefix);
-            e.MapSwagger();
-        
         });
     }
     /// <summary>
