@@ -47,8 +47,8 @@ public class Startup
         app.UseRouting();
 
         app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
-        // app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
-        // app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
+        app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
+        app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
 
         
 
