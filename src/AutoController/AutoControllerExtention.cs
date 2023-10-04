@@ -85,7 +85,7 @@ public static class AutoControllerExtention
         {
             result =  endpointRouteBuilder.MapGet(key.Path,handler);
         }
-        return result.WithName(key.ToString()); 
+        return result.WithName(key.Path); 
     }    
     private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters)
     {

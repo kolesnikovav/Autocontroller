@@ -88,6 +88,12 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// </summary>
     private static DatabaseTypes DatabaseType { get; set; }
     #endregion
+
+    /// <summary>
+    /// options that depends on api prefix
+    /// </summary>    
+    private readonly Dictionary<string,IAutoControllerOptions> _options = new();
+
     /// <summary>
     /// The Dictionary with all used routes
     /// </summary>
@@ -108,57 +114,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <summary>
     public Dictionary<RouteKey, RouteParameters>? GetAutoroutes(string api_prefix)
     {
-        return _autoroutes[api_prefix] ?? null;
+        if (_autoroutes.ContainsKey(api_prefix)) return _autoroutes[api_prefix];
+        return null;
     }
+    private ILogger? logger;
 
-
-    /// <summary>
-    /// Returns current options for external use
-    /// </summary>
-    public IAutoControllerOptions Options
-    {
-        get
-        {
-            return new AutoControllerOptions()
-            {
-                AccessDeniedPath = _accessDeniedPath,
-                AuthentificationPath = _authentificationPath,
-                RoutePrefix = _routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultPostAction = _defaultPostAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions
-            };
-        }
-    }
-
-    private string _routePrefix;
-    private string _startRoutePath;
-    private InteractingType? _defaultInteractingType;
-    private JsonSerializerOptions? _jsonOptions;
-    private ILogger logger;
-
-    private string _authentificationPath;
-    private string _accessDeniedPath;
-    private string _defaultGetAction;
-    private string _defaultGetCountAction;
-    private string _defaultPostAction;
-    private string _defaultDeleteAction;
-    private string _defaultUpdateAction;
-    private string _defaultFilterParameter;
-    private string _defaultSortParameter;
-    private string _defaultSortDirectionParameter;
-    private string _defaultPageParameter;
-    private string _defaultItemsPerPageParameter;
-    private Dictionary<string, RequestParamName> _requestParams;
     private void LogInformation(string message)
     {
         logger?.LogInformation(message);
@@ -172,45 +132,45 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         this.logger = logger;
     }
-    private void AddRoutesForProperties(Type givenType, string routeClassName, uint itemsPerPage)
-    {
-        foreach (PropertyInfo pInfo in givenType.GetProperties())
-        {
-            MapToControllerGetParamAttribute? b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
-            if (b != null)
-            {
-                string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-                string optional = b.Optional ? "?" : string.Empty;
-                string route = routeClassName + "/{" + r + optional + "}";
-                //"{controller}/{action}/{property?}"
-                RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Get };
+    // private void AddRoutesForProperties(Type givenType, string routeClassName, uint itemsPerPage)
+    // {
+    //     // foreach (PropertyInfo pInfo in givenType.GetProperties())
+    //     // {
+    //     //     MapToControllerGetParamAttribute? b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
+    //     //     if (b != null)
+    //     //     {
+    //     //         string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
+    //     //         string optional = b.Optional ? "?" : string.Empty;
+    //     //         string route = routeClassName + "/{" + r + optional + "}";
+    //     //         //"{controller}/{action}/{property?}"
+    //     //         RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Get };
 
-                var api_route = new Dictionary<RouteKey,RouteParameters>(){rkey,new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }};
+    //     //         var api_route = new Dictionary<RouteKey,RouteParameters>(){rkey,new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }};
 
 
 
-                _autoroutes.Add(
-                    rkey,
-                    new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
-                    );
-                LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
+    //     //         _autoroutes.Add(
+    //     //             rkey,
+    //     //             new RouteParameters() { EntityType = pInfo.PropertyType, ItemsPerPage = itemsPerPage }
+    //     //             );
+    //     //         LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
 
-            }
-            if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
-            {
-                EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
-                string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
-                string route = routeClassName + "/{" + r + "}";
-                //"{controller}/{action}/{property}"
-                RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
-                _autoroutes.Add(
-                    rkey,
-                    new RouteParameters() { EntityType = pInfo.PropertyType }
-                    );
-                LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
-            }
-        }
-    }
+    //     //     }
+    //     //     if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
+    //     //     {
+    //     //         EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
+    //     //         string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
+    //     //         string route = routeClassName + "/{" + r + "}";
+    //     //         //"{controller}/{action}/{property}"
+    //     //         RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
+    //     //         _autoroutes.Add(
+    //     //             rkey,
+    //     //             new RouteParameters() { EntityType = pInfo.PropertyType }
+    //     //             );
+    //     //         LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
+    //     //     }
+    //     // }
+    // }
     private static void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
     {
         string AKey = AccessHelper.GetAccessKey(givenType, null, httpMethod);
@@ -272,11 +232,12 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    private void AddGetRoutesForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
+    private void AddGetRoutesForEntity(IAutoControllerOptions autoControllerOptions, string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
     {
-        string basePath = _startRoutePath + controllerName;
-        string countPath = basePath + "/" + _defaultGetCountAction;
-        string defaultPath = basePath + "/" + _defaultGetAction;
+        string api_prefix = autoControllerOptions.RoutePrefix;
+        string basePath = GetStartPoutePath(api_prefix) + controllerName;
+        string countPath = basePath + "/" + autoControllerOptions.DefaultGetCountAction;
+        string defaultPath = basePath + "/" + autoControllerOptions.DefaultGetAction;
         var apiRoutes = GetAutoroutes(api_prefix);
         if (apiRoutes == null)
         {
@@ -285,6 +246,18 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         }        
         RouteKey rkeyDefault = new() { Path = defaultPath, HttpMethod = HttpMethod.Get };
         RouteKey rkeyCount = new() { Path = countPath, HttpMethod = HttpMethod.Get };
+        var requestParams = RequestParams.Create(
+            autoControllerOptions.DefaultPageParameter,
+             "size",
+              autoControllerOptions.DefaultFilterParameter,
+              autoControllerOptions.DefaultSortParameter,
+              autoControllerOptions.DefaultSortDirectionParameter
+            );
+        // Create(string page, string size, string filter, string sort, string sortdirection)
+
+
+
+
         if (!apiRoutes.ContainsKey(rkeyDefault))
         {
             RouteParameters rParam = new()
@@ -300,10 +273,10 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                              _connectionString,
                                                               interactingType,
                                                               allowAnonimus,
-                                                              _authentificationPath,
-                                                              _accessDeniedPath,
-                                                              _requestParams,
-                                                             _jsonOptions,
+                                                              autoControllerOptions.AuthentificationPath,
+                                                              autoControllerOptions.AccessDeniedPath,
+                                                              requestParams,
+                                                             autoControllerOptions.JsonSerializerOptions,
                                                              _dbContextFactory })
             };
             apiRoutes.Add(rkeyDefault, rParam);
@@ -323,19 +296,20 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                 DatabaseType,
                                                             _connectionString,
                                                             allowAnonimus,
-                                                            _authentificationPath,
-                                                            _accessDeniedPath,
-                                                            _requestParams,
+                                                            autoControllerOptions.AuthentificationPath,
+                                                            autoControllerOptions.AccessDeniedPath,
+                                                            requestParams,
                                                             _dbContextFactory })
             };
             apiRoutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
         }
     }
-    private void AddPostRouteForEntity(string api_prefix,string controllerName, Type givenType, InteractingType interactingType)
+    private void AddPostRouteForEntity(IAutoControllerOptions autoControllerOptions,string controllerName, Type givenType, InteractingType interactingType)
     {
-        string basePath = _startRoutePath + controllerName;
-        string defaultPath = basePath + "/" + _defaultPostAction;
+        string api_prefix = autoControllerOptions.RoutePrefix;
+        string basePath = GetStartPoutePath(api_prefix) + controllerName;        
+        string defaultPath = basePath + "/" + autoControllerOptions.DefaultPostAction;
         var apiRoutes = GetAutoroutes(api_prefix);
         if (apiRoutes == null)
         {
@@ -357,9 +331,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           DatabaseType,
                                                                           _connectionString,
                                                                           interactingType,
-                                                                          _authentificationPath,
-                                                                          _accessDeniedPath,
-                                                                          _jsonOptions,
+                                                                          autoControllerOptions.AuthentificationPath,
+                                                                          autoControllerOptions.AccessDeniedPath,
+                                                                          autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
@@ -367,10 +341,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddDeleteRouteForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType)
+    private void AddDeleteRouteForEntity(IAutoControllerOptions autoControllerOptions, string controllerName, Type givenType, InteractingType interactingType)
     {
-        string basePath = _startRoutePath + controllerName;
-        string defaultPath = basePath + "/" + _defaultDeleteAction;
+        string api_prefix = autoControllerOptions.RoutePrefix;
+        string basePath = GetStartPoutePath(api_prefix) + controllerName;        
+        string defaultPath = basePath + "/" + autoControllerOptions.DefaultDeleteAction;        
         var apiRoutes = GetAutoroutes(api_prefix);
         if (apiRoutes == null)
         {
@@ -391,9 +366,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           DatabaseType,
                                                                           _connectionString,
                                                                           interactingType,
-                                                                          _authentificationPath,
-                                                                          _accessDeniedPath,
-                                                                          _jsonOptions,
+                                                                          autoControllerOptions.AuthentificationPath,
+                                                                          autoControllerOptions.AccessDeniedPath,
+                                                                          autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
@@ -401,10 +376,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddUpdateRouteForEntity(string api_prefix, string controllerName, Type givenType, InteractingType interactingType)
+    private void AddUpdateRouteForEntity(IAutoControllerOptions autoControllerOptions, string controllerName, Type givenType, InteractingType interactingType)
     {
-        string basePath = _startRoutePath + controllerName;
-        string defaultPath = basePath + "/" + _defaultUpdateAction;
+        string api_prefix = autoControllerOptions.RoutePrefix;
+        string basePath = GetStartPoutePath(api_prefix) + controllerName;        
+        string defaultPath = basePath + "/" + autoControllerOptions.DefaultUpdateAction;        
         var apiRoutes = GetAutoroutes(api_prefix);
         if (apiRoutes == null)
         {
@@ -427,9 +403,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           DatabaseType,
                                                                           _connectionString,
                                                                           interactingType,
-                                                                          _authentificationPath,
-                                                                          _accessDeniedPath,
-                                                                          _jsonOptions,
+                                                                          autoControllerOptions.AuthentificationPath,
+                                                                          autoControllerOptions.AccessDeniedPath,
+                                                                          autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory })
             };
@@ -462,15 +438,19 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
+    private string GetStartPoutePath(string prefix)
+    => string.IsNullOrWhiteSpace(prefix) ? string.Empty : prefix + "/";
+
     private void CreateRoutes(string api_prefix)
     {
+        IAutoControllerOptions options = GetControllerOptions(api_prefix) ?? throw (new Exception(string.Format("AutoController options with prefix {0} Not found", api_prefix)));
         foreach (var c in ControllerNames)
         {
-            InteractingType usedInteractingType = _defaultInteractingType == null ? c.Value.InteractingType : (InteractingType)_defaultInteractingType;
-            AddGetRoutesForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
-            AddPostRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
-            AddDeleteRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
-            AddUpdateRouteForEntity(api_prefix, c.Value.ControllerName, c.Key, usedInteractingType);
+            InteractingType usedInteractingType = options.InteractingType ?? InteractingType.JSON;
+            AddGetRoutesForEntity(options, c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
+            AddPostRouteForEntity(options, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddDeleteRouteForEntity(options, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddUpdateRouteForEntity(options, c.Value.ControllerName, c.Key, usedInteractingType);
         }
     }
     private static void RetriveEntityKeys(Type givenType)
@@ -539,55 +519,46 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         _connectionString = connectionString;
         DatabaseType = databaseType;
-        _routePrefix = routePrefix;
-        _defaultInteractingType = interactingType;
-        _authentificationPath = authentificationPath;
-        _accessDeniedPath = accessDeniedPath;
-        _jsonOptions = jsonSerializerOptions;
-        _defaultGetAction = DefaultGetAction;
-        _defaultGetCountAction = DefaultGetCountAction;
-        _defaultPostAction = DefaultPostAction;
-        _defaultDeleteAction = DefaultDeleteAction;
-        _defaultUpdateAction = DefaultUpdateAction;
-        _defaultFilterParameter = DefaultFilterParameter;
-        _defaultSortParameter = DefaultSortParameter;
-        _defaultSortDirectionParameter = DefaultSortDirectionParameter;
-        _defaultPageParameter = DefaultPageParameter;
-        _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
-        _startRoutePath = string.IsNullOrWhiteSpace(_routePrefix) ? string.Empty : _routePrefix + "/";
-        _requestParams = RequestParams.Create(
-            _defaultPageParameter,
-            _defaultItemsPerPageParameter,
-            _defaultFilterParameter,
-            _defaultSortParameter,
-            _defaultSortDirectionParameter
-        );
-        // found keys of entity for filering results
-        if (!ApiOptions.ContainsKey(routePrefix))
+
+        var options = GetControllerOptions(routePrefix);
+        if (options == null)
         {
-            ApiOptions.Add(routePrefix, new AutoControllerOptions
+            options = new AutoControllerOptions
             {
-                RoutePrefix = routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultPostAction = _defaultPostAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                DatabaseType = DatabaseType,
-                ConnectionString = _connectionString,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions,
-                AuthentificationPath = _authentificationPath,
-                AccessDeniedPath = _accessDeniedPath
-            });
-        }
-        CreateRoutes(_routePrefix);
+                RoutePrefix = routePrefix
+            };
+            _options.Add(routePrefix, options);
+        };
+        options.RoutePrefix = routePrefix;
+        options.InteractingType = interactingType;
+        options.AuthentificationPath = authentificationPath;
+        options.AccessDeniedPath = accessDeniedPath;
+        options.JsonSerializerOptions =jsonSerializerOptions;
+        options.DefaultGetAction =DefaultGetAction;
+        options.DefaultGetCountAction =DefaultGetCountAction;
+        options.DefaultPostAction =DefaultPostAction;
+        options.DefaultDeleteAction =DefaultDeleteAction;
+        options.DefaultFilterParameter =DefaultFilterParameter;
+        options.DefaultSortParameter =DefaultSortParameter;
+        options.DefaultSortDirectionParameter =DefaultSortDirectionParameter;
+        options.DefaultPageParameter =DefaultPageParameter;
+        options.DefaultItemsPerPageParameter =DefaultItemsPerPageParameter;
+        options.DefaultSortParameter =DefaultSortParameter;
+        options.DefaultUpdateAction =DefaultUpdateAction;
+        CreateRoutes(routePrefix);
     }
+    /// <summary>
+    /// Get options for route api prefix
+    /// </summary>
+    /// <param name="routePrefix"></param>
+    /// <returns></returns>Optons for api prefix <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+
+    public IAutoControllerOptions? GetControllerOptions(string routePrefix)
+    => _options.ContainsKey(routePrefix) ? _options[routePrefix] : null;
+
     /// <summary>
     /// Create routes for each marked entity type
     /// </summary>
@@ -623,54 +594,32 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         string DefaultItemsPerPageParameter = "size",
         string DefaultUpdateAction = "Update")
     {
-        _routePrefix = routePrefix;
-        _defaultInteractingType = interactingType;
-        _authentificationPath = authentificationPath;
-        _accessDeniedPath = accessDeniedPath;
-        _jsonOptions = jsonSerializerOptions;
-        _defaultGetAction = DefaultGetAction;
-        _defaultGetCountAction = DefaultGetCountAction;
-        _defaultPostAction = DefaultPostAction;
-        _defaultDeleteAction = DefaultDeleteAction;
-        _defaultUpdateAction = DefaultUpdateAction;
-        _defaultFilterParameter = DefaultFilterParameter;
-        _defaultSortParameter = DefaultSortParameter;
-        _defaultSortDirectionParameter = DefaultSortDirectionParameter;
-        _defaultPageParameter = DefaultPageParameter;
-        _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
-        _startRoutePath = string.IsNullOrWhiteSpace(_routePrefix) ? string.Empty : _routePrefix + "/";
-        _requestParams = RequestParams.Create(
-            _defaultPageParameter,
-            _defaultItemsPerPageParameter,
-            _defaultFilterParameter,
-            _defaultSortParameter,
-            _defaultSortDirectionParameter
-        );
-        // found keys of entity for filering results
-        if (!ApiOptions.ContainsKey(routePrefix))
+        var options = GetControllerOptions(routePrefix);
+        if (options == null)
         {
-            ApiOptions.Add(routePrefix, new AutoControllerOptions
+            options = new AutoControllerOptions
             {
-                RoutePrefix = routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultPostAction = _defaultPostAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                DatabaseType = DatabaseType,
-                ConnectionString = _connectionString,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions,
-                AuthentificationPath = _authentificationPath,
-                AccessDeniedPath = _accessDeniedPath
-            });
-        }
-        CreateRoutes(_routePrefix);
+                RoutePrefix = routePrefix
+            };
+            _options.Add(routePrefix, options);
+        };
+        options.RoutePrefix = routePrefix;
+        options.InteractingType = interactingType;
+        options.AuthentificationPath = authentificationPath;
+        options.AccessDeniedPath = accessDeniedPath;
+        options.JsonSerializerOptions =jsonSerializerOptions;
+        options.DefaultGetAction =DefaultGetAction;
+        options.DefaultGetCountAction =DefaultGetCountAction;
+        options.DefaultPostAction =DefaultPostAction;
+        options.DefaultDeleteAction =DefaultDeleteAction;
+        options.DefaultFilterParameter =DefaultFilterParameter;
+        options.DefaultSortParameter =DefaultSortParameter;
+        options.DefaultSortDirectionParameter =DefaultSortDirectionParameter;
+        options.DefaultPageParameter =DefaultPageParameter;
+        options.DefaultItemsPerPageParameter =DefaultItemsPerPageParameter;
+        options.DefaultSortParameter =DefaultSortParameter;
+        options.DefaultUpdateAction =DefaultUpdateAction;
+        CreateRoutes(routePrefix);
     }
     /// <summary>
     /// Retrive request response schema assosiated with api route prefix
