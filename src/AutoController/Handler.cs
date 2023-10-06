@@ -254,8 +254,8 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE?>? recivedDataList;
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
@@ -279,7 +279,10 @@ internal static class Handler
                             {
                                 dbcontext.Set<TE>().Update(recivedData);
                             }
-                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            if (dbContextBeforeSaveChangesMethod != null) 
+                            {
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                            }                            
                             await dbcontext.SaveChangesAsync();
                             byte[] jsonUtf8Bytes;
                             jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
@@ -295,10 +298,10 @@ internal static class Handler
                 {
                     try
                     {
-                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        recivedDataList = JsonSerializer.Deserialize<List<TE?>?>(body);
                         if (recivedDataList != null)
                         {
-                            if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList!, mi, out Reason))
                             {
                                 await context.Response.WriteAsync(Reason);
                             }
@@ -306,17 +309,21 @@ internal static class Handler
                             {
                                 if (!update)
                                 {
-                                    dbcontext.Set<TE>().AddRange(recivedDataList);
+                                    dbcontext.Set<TE>().AddRange(recivedDataList!);
                                 }
                                 else
                                 {
-                                    dbcontext.Set<TE>().UpdateRange(recivedDataList);
+                                    dbcontext.Set<TE>().UpdateRange(recivedDataList!);
                                 }
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                if (dbContextBeforeSaveChangesMethod != null) 
+                                {
+                                   DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                                }
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
                                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
-                                await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                await context.Response
+                                .WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }
                         }
                     }
@@ -334,7 +341,7 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var recivedDataL = (List<TE>?)serializer.Deserialize(stream);
                 await stream.DisposeAsync();
                 if (recivedDataL != null && recivedDataL.Count > 0)
                 {
@@ -348,7 +355,10 @@ internal static class Handler
                         {
                             dbcontext.Set<TE>().UpdateRange(recivedDataL);
                         }
-                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        if (dbContextBeforeSaveChangesMethod != null) 
+                        {
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                        }                        
                         await dbcontext.SaveChangesAsync();
                         StringWriter textWriter = new();
                         serializer.Serialize(textWriter, recivedDataL.ToList());
@@ -383,8 +393,8 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE?>? recivedDataList;
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
@@ -401,7 +411,10 @@ internal static class Handler
                         if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                         {
                             dbcontext.Set<TE>().Remove(recivedData);
-                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            if (dbContextBeforeSaveChangesMethod != null) 
+                            {
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                            }                            
                             await dbcontext.SaveChangesAsync();
                             await context.Response.WriteAsync("Deleted");
                         }
@@ -416,13 +429,16 @@ internal static class Handler
                     // It can be array
                     try
                     {
-                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        recivedDataList = JsonSerializer.Deserialize<List<TE?>?>(body);
                         if (recivedDataList != null)
                         {
-                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataList!, mi, out Reason))
                             {
-                                dbcontext.Set<TE>().RemoveRange(recivedDataList);
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                dbcontext.Set<TE>().RemoveRange(recivedDataList!);
+                                if (dbContextBeforeSaveChangesMethod != null) 
+                                {
+                                   DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                                }                                
                                 await dbcontext.SaveChangesAsync();
                                 await context.Response.WriteAsync("Deleted");
                             }
@@ -446,14 +462,17 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var deserialized = serializer.Deserialize(stream);
                 await stream.DisposeAsync();
-                if (recivedDataL != null && recivedDataL.Count > 0)
+                if (deserialized is List<TE> recivedDataL && recivedDataL.Count > 0)
                 {
                     if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
                     {
                         dbcontext.Set<TE>().RemoveRange(recivedDataL);
-                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        if (dbContextBeforeSaveChangesMethod != null) 
+                        {
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                        }                        
                         await dbcontext.SaveChangesAsync();
                         await context.Response.WriteAsync("Deleted");
                     }
