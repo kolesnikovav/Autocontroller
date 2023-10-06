@@ -21,12 +21,12 @@ public class RouteKey
     /// <summary>
     /// Request path
     /// </summary>
-    public string Path { get; set; }
+    public string Path { get; set; } = null!;
     /// <summary>
     /// Http request method
     /// Currently, GET and POST supported
     /// </summary>
-    public HttpMethod HttpMethod { get; set; }
+    public HttpMethod HttpMethod { get; set; } = null!;
     /// <summary>
     /// route key string presentation
     /// </summary>
@@ -53,7 +53,7 @@ public class RouteParameters
     /// <summary>
     /// Type of Entity in DBContext
     /// </summary>
-    public Type EntityType { get; set; }
+    public Type EntityType { get; set; } = null!;
     /// <summary>
     ///
     /// </summary>
@@ -61,7 +61,7 @@ public class RouteParameters
     /// <summary>
     /// handler for request
     /// </summary>
-    public RequestDelegate Handler { get; set; }
+    public RequestDelegate Handler { get; set; } = null!;
 }
 /// <summary>
 /// Service that handle requests for Entityes
