@@ -14,6 +14,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.OpenApi.Interfaces;
+using Microsoft.AspNetCore.Components.Forms;
 
 
 namespace AutoController;
@@ -259,6 +263,18 @@ public static class AutoControllerExtention
             foreach (var v in routes)
             {
                 AddRoute(appBuilder, routePrefix , v.Key, v.Value);
+                // Console.WriteLine(string.Format("routePrefix {0} , v.Key {1}, v.Value {2}",routePrefix, v.Key, v.Value));
+                // var constraint = new ConsumesAttribute("application/json", "text/xml");                
+                // var actionDesc = new ActionDescriptor() {
+                //     DisplayName = v.Key.Path,
+                //     AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                //         Template=v.Key.Path,
+                //         Name = v.Key.Path
+                //     }
+                // };
+                // var context = new ApiDescriptionProviderContext(new ActionDescriptor[] {
+                //    actionDesc 
+                // });
             }            
         }   
     }

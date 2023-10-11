@@ -156,6 +156,8 @@ internal static class Handler
             {
                 byte[] jsonUtf8Bytes;
                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, jsonSerializerOptions);
+                context.Response.Headers.Add("content-type","application/json; charset=utf-8");
+                context.Response.StatusCode = 200; //                
                 await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
             }
             else if (interactingType == InteractingType.XML)
@@ -165,6 +167,8 @@ internal static class Handler
                 XmlSerializer serializer = new(typeof(List<TE>), a);
                 StringWriter textWriter = new();
                 serializer.Serialize(textWriter, queryResult.ToList());
+                context.Response.Headers.Add("content-type","application/xml; charset=utf-8");
+                context.Response.StatusCode = 200; //                   
                 await context.Response.WriteAsync(textWriter.ToString());
                 await textWriter.DisposeAsync();
             }
@@ -322,6 +326,8 @@ internal static class Handler
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
                                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
+                                context.Response.Headers.Add("content-type","application/json; charset=utf-8");
+                                context.Response.StatusCode = 201; //created
                                 await context.Response
                                 .WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }

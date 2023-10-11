@@ -23,11 +23,11 @@ public class RequestParamName
     /// <summary>
     /// User difined parameter name
     /// </summary>
-    public string UserDefinedValue { get; set; }
+    public string UserDefinedValue { get; set; } = null!;
     /// <summary>
     /// Type to cast request data
     /// </summary>
-    public Type TypeToCast { get; set; }
+    public Type TypeToCast { get; set; } = null!;
 }
 /// <summary>
 /// Container for request data
@@ -96,15 +96,15 @@ public static class RequestParams
         }
         if (requestData.ContainsKey(reqDefinitions["filter"].UserDefinedValue))
         {
-            result.filter = requestData[reqDefinitions["filter"].UserDefinedValue];
+            result.filter = requestData[reqDefinitions["filter"].UserDefinedValue]!;
         }
         if (requestData.ContainsKey(reqDefinitions["sort"].UserDefinedValue))
         {
-            result.sort = requestData[reqDefinitions["sort"].UserDefinedValue];
+            result.sort = requestData[reqDefinitions["sort"].UserDefinedValue]!;
         }
         if (requestData.ContainsKey(reqDefinitions["sortdirection"].UserDefinedValue))
         {
-            result.sortDirection = requestData[reqDefinitions["sortdirection"].UserDefinedValue];
+            result.sortDirection = requestData[reqDefinitions["sortdirection"].UserDefinedValue]!;
         }
         return result;
     }
