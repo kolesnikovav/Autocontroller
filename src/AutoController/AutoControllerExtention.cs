@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Identity.Client;
 
 
 namespace AutoController;
@@ -65,44 +66,52 @@ public static class AutoControllerExtention
         var service = builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return (AutoRouterService<T>)service;
     }
-    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix) 
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix, string controllerName, string actionName) 
     {
         IEndpointConventionBuilder result;
+        string verb;
         if (key.HttpMethod == HttpMethod.Get)
         {
+            verb = "GET";
            result =  endpointRouteBuilder.MapGet(key.Path,handler); 
         }
         else if (key.HttpMethod == HttpMethod.Post)
         {
+            verb = "POST";
             result =  endpointRouteBuilder.MapPost(key.Path,handler);
         }
         else if (key.HttpMethod == HttpMethod.Patch)
         {
+            verb = "PATCH";
             result = endpointRouteBuilder.MapPatch(key.Path,handler);
         }
         else if (key.HttpMethod == HttpMethod.Delete)
         {
+            verb = "DELETE";
             result = endpointRouteBuilder.MapDelete(key.Path,handler);
         }
         else if (key.HttpMethod == HttpMethod.Put)
         {
+            verb = "PUT";
             result = endpointRouteBuilder.MapPut(key.Path,handler);
         } 
         else
         {
+            verb = "GET";
             result =  endpointRouteBuilder.MapGet(key.Path,handler);
         }
         return result
         .WithName(key.Path)
         .WithDescription(key.ToString())
-        .WithMetadata(new SwaggerOperationAttribute("summary001", "description001"))
+        .WithMetadata(new AutoControllerRouteMetadata(verb,api_prefix,key.Path,controllerName,actionName))
+        .WithGroupName(api_prefix)
         .WithOpenApi(); 
     }    
     private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters)
     {
         builder.UseEndpoints(e => 
         {
-            e.MapAutoRoute(key,parameters.Handler, api_prefix);
+            var a =e.MapAutoRoute(key,parameters.Handler, api_prefix, parameters.ControllerName, parameters.ActionName);
         });
     }
     /// <summary>
@@ -275,7 +284,10 @@ public static class AutoControllerExtention
                 // var context = new ApiDescriptionProviderContext(new ActionDescriptor[] {
                 //    actionDesc 
                 // });
-            }            
+            }
+            var s = appBuilder.ApplicationServices.GetRequiredService<IApiDescriptionProvider>(); 
+            //var ww  =appBuilder.DataSources.OfType<EndpointDataSource>().Single();
+            var qq=1;           
         }   
     }
     /// <summary>
