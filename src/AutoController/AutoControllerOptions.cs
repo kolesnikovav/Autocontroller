@@ -10,7 +10,7 @@ public class AutoControllerOptions : IAutoControllerOptions
     /// <summary>
     /// Start prefix segment for route
     /// </summary>
-    public string RoutePrefix { get; set; }
+    public string RoutePrefix { get; set; } = string.Empty;
     /// <summary>
     /// Controller default action for get request
     /// </summary>

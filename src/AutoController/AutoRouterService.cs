@@ -93,8 +93,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
     private static readonly Type KeyAttributeType = typeof(KeyAttribute);
     private static string? _connectionString;
-    private static MethodInfo _dbContextBeforeSaveChangesMethod;
-    private static Func<T> _dbContextFactory;
+    private static MethodInfo? _dbContextBeforeSaveChangesMethod;
+    private static Func<T>? _dbContextFactory;
     /// <summary>
     /// Database type for autocontroller
     /// </summary>
@@ -122,8 +122,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// GetAutoroutes by api prefix
     /// </summary>
     /// <param name="api_prefix"></param>
-    /// <returns></returns> 
-    /// <summary>
+    /// <returns></returns>
     public Dictionary<RouteKey, RouteParameters>? GetAutoroutes(string api_prefix)
     {
         if (_autoroutes.ContainsKey(api_prefix)) return _autoroutes[api_prefix];
@@ -617,7 +616,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <param name="databaseType">Database type for DBContext</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContext factory</param>
-    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo DbContextBeforeSaveChangesMethod, Func<T> DbContextFactory)
+    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod, Func<T>? DbContextFactory)
     {
         _connectionString = connString;
         DatabaseType = databaseType;
