@@ -31,7 +31,23 @@ public class Startup
         services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
         services.AddEndpointsApiExplorer();
         services.AddAutoControllerOpenApiDefinition();
-        services.AddSwaggerGen();
+        // services.AddSwaggerGen(c =>
+        //         c.CustomOperationIds(apiDesc =>
+        //         {
+        //              return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+        //         });
+        // );
+        services.AddSwaggerGen(c =>
+        {
+
+            // Use method name as operationId
+            c.CustomOperationIds(apiDesc =>
+            {
+                Console.WriteLine(apiDesc.ActionDescriptor.ToString());
+                return null;
+                //return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+            });
+        });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

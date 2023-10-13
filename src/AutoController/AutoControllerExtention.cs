@@ -66,7 +66,7 @@ public static class AutoControllerExtention
         var service = builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return (AutoRouterService<T>)service;
     }
-    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix, string controllerName, string actionName) 
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix, string controllerName, string actionName, InteractingType interactingType) 
     {
         IEndpointConventionBuilder result;
         string verb;
@@ -100,18 +100,19 @@ public static class AutoControllerExtention
             verb = "GET";
             result =  endpointRouteBuilder.MapGet(key.Path,handler);
         }
+        var metadata = new AutoControllerRouteMetadata(verb,api_prefix,key.Path,controllerName,actionName, interactingType);
         return result
         .WithName(key.Path)
         .WithDescription(key.ToString())
-        .WithMetadata(new AutoControllerRouteMetadata(verb,api_prefix,key.Path,controllerName,actionName))
+        .WithMetadata(metadata)
         .WithGroupName(api_prefix)
         .WithOpenApi(); 
     }    
-    private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters)
+    private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters, InteractingType interactingType)
     {
         builder.UseEndpoints(e => 
         {
-            var a =e.MapAutoRoute(key,parameters.Handler, api_prefix, parameters.ControllerName, parameters.ActionName);
+            var a =e.MapAutoRoute(key,parameters.Handler, api_prefix, parameters.ControllerName, parameters.ActionName, interactingType);
         });
     }
     /// <summary>
@@ -194,7 +195,7 @@ public static class AutoControllerExtention
         {
             foreach (var v in routes)
             {
-                AddRoute(appBuilder, routePrefix , v.Key, v.Value);
+                AddRoute(appBuilder, routePrefix , v.Key, v.Value, interactingType ?? InteractingType.JSON);
             }            
         }            
     }
@@ -271,23 +272,8 @@ public static class AutoControllerExtention
         {
             foreach (var v in routes)
             {
-                AddRoute(appBuilder, routePrefix , v.Key, v.Value);
-                // Console.WriteLine(string.Format("routePrefix {0} , v.Key {1}, v.Value {2}",routePrefix, v.Key, v.Value));
-                // var constraint = new ConsumesAttribute("application/json", "text/xml");                
-                // var actionDesc = new ActionDescriptor() {
-                //     DisplayName = v.Key.Path,
-                //     AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
-                //         Template=v.Key.Path,
-                //         Name = v.Key.Path
-                //     }
-                // };
-                // var context = new ApiDescriptionProviderContext(new ActionDescriptor[] {
-                //    actionDesc 
-                // });
+                AddRoute(appBuilder, routePrefix , v.Key, v.Value, interactingType ?? InteractingType.JSON);
             }
-            var s = appBuilder.ApplicationServices.GetRequiredService<IApiDescriptionProvider>(); 
-            //var ww  =appBuilder.DataSources.OfType<EndpointDataSource>().Single();
-            var qq=1;           
         }   
     }
     /// <summary>

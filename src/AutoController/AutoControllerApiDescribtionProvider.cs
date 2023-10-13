@@ -37,24 +37,25 @@ internal sealed class AutoControllerApiDescribtionProvider : IApiDescriptionProv
 
     private static ApiDescription CreateApiDescription(RouteEndpoint routeEndpoint, AutoControllerRouteMetadata autocontrollerMetadata)
     {
-        var apiDescription = new ApiDescription();
-        apiDescription.HttpMethod = autocontrollerMetadata.Verb;
-        apiDescription.GroupName = autocontrollerMetadata.Prefix;
-        apiDescription.ActionDescriptor = new ActionDescriptor
+        var apiDescription = new ApiDescription
         {
-            DisplayName = autocontrollerMetadata.Action,
-            
-            EndpointMetadata = new List<object>() {
-                autocontrollerMetadata.Template              
-            },
-            RouteValues = new Dictionary<string, string?>
+            HttpMethod = autocontrollerMetadata.Verb,
+            GroupName = autocontrollerMetadata.Prefix,
+            ActionDescriptor = new ActionDescriptor
             {
-                // Swagger uses this to group endpoints together.
-                // Group methods together using the service name.
-                ["controller"] = autocontrollerMetadata.Controller,
-                ["action"] = autocontrollerMetadata.Action
+                DisplayName = autocontrollerMetadata.Action,
+                EndpointMetadata = new List<object>() {
+                autocontrollerMetadata.Template
             },
-            //EndpointMetadata = autocontrollerMetadata.;// routeEndpoint.Metadata..ToList()
+                RouteValues = new Dictionary<string, string?>
+                {
+                    // Swagger uses this to group endpoints together.
+                    // Group methods together using the service name.
+                    ["controller"] = autocontrollerMetadata.Controller,
+                    ["action"] = autocontrollerMetadata.Action
+                },
+                //EndpointMetadata = autocontrollerMetadata.;// routeEndpoint.Metadata..ToList()
+            }
         };
         var routeInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo
         {
@@ -62,13 +63,24 @@ internal sealed class AutoControllerApiDescribtionProvider : IApiDescriptionProv
             Template = autocontrollerMetadata.Template
         };
         apiDescription.ActionDescriptor.AttributeRouteInfo=routeInfo;
-        apiDescription.SupportedRequestFormats.Add(new ApiRequestFormat { MediaType = "application/json" });
-        apiDescription.SupportedResponseTypes.Add(new ApiResponseType
+        if (autocontrollerMetadata.InteractingType == InteractingType.XML)
         {
-            ApiResponseFormats = { new ApiResponseFormat { MediaType = "application/json" } },
-            // ModelMetadata = new GrpcModelMetadata(ModelMetadataIdentity.ForType(methodDescriptor.OutputType.ClrType)),
-            StatusCode = 200
-        });
+            apiDescription.SupportedRequestFormats.Add(new ApiRequestFormat { MediaType = "application/xml" });
+            apiDescription.SupportedResponseTypes.Add(new ApiResponseType
+            {
+                ApiResponseFormats = { new ApiResponseFormat { MediaType = "application/xml" } },
+                StatusCode = 200
+            });
+        }
+        else
+        {
+            apiDescription.SupportedRequestFormats.Add(new ApiRequestFormat { MediaType = "application/json" });
+            apiDescription.SupportedResponseTypes.Add(new ApiResponseType
+            {
+                ApiResponseFormats = { new ApiResponseFormat { MediaType = "application/json" } },
+                StatusCode = 200
+            });
+        }
         return apiDescription;
     }
     public void OnProvidersExecuted(ApiDescriptionProviderContext context)

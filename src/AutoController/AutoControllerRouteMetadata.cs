@@ -15,13 +15,14 @@ public sealed class AutoControllerRouteMetadata
     /// <param name="action"></param> <summary>
     /// 
     /// </summary>
-    public AutoControllerRouteMetadata(string verb, string prefix, string template, string controller, string action)
+    public AutoControllerRouteMetadata(string verb, string prefix, string template, string controller, string action, InteractingType interactingType)
     {
         Verb = verb;
         Prefix = prefix;
         Template = template;
         Controller = controller;
         Action = action;
+        InteractingType = InteractingType;
     }
 
     /// <summary>
@@ -49,4 +50,11 @@ public sealed class AutoControllerRouteMetadata
     /// </summary>
     /// <value></value>
     public string Prefix { get; }
+    /// <summary>
+    /// 
+    /// </summary> <summary>
+    /// 
+    /// </summary>
+    /// <value></value>
+    public InteractingType InteractingType { get; } = InteractingType.JSON;
 }
