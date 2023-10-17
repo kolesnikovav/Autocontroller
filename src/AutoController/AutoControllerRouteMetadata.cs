@@ -13,7 +13,7 @@ public sealed class AutoControllerRouteMetadata
     /// <param name="template"></param>
     /// <param name="controller"></param>
     /// <param name="action"></param> <summary>
-    /// 
+    /// <param name="interactingType"></param> <summary>
     /// </summary>
     public AutoControllerRouteMetadata(string verb, string prefix, string template, string controller, string action, InteractingType interactingType)
     {
@@ -22,7 +22,7 @@ public sealed class AutoControllerRouteMetadata
         Template = template;
         Controller = controller;
         Action = action;
-        InteractingType = InteractingType;
+        InteractingType = interactingType;
     }
 
     /// <summary>
