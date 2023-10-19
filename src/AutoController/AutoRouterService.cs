@@ -99,6 +99,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// Database type for autocontroller
     /// </summary>
     private static DatabaseTypes DatabaseType { get; set; }
+
+    private static DbContextOptions<T>? _dbContextOptions;
     #endregion
 
     /// <summary>
@@ -248,7 +250,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                               autoControllerOptions.AccessDeniedPath,
                                                               requestParams,
                                                              autoControllerOptions.JsonSerializerOptions,
-                                                             _dbContextFactory })
+                                                             _dbContextFactory,
+                                                             _dbContextOptions })
             };
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -272,7 +275,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                             autoControllerOptions.AuthentificationPath,
                                                             autoControllerOptions.AccessDeniedPath,
                                                             requestParams,
-                                                            _dbContextFactory })
+                                                            _dbContextFactory,
+                                                            _dbContextOptions })
             };
             apiRoutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
@@ -310,7 +314,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           autoControllerOptions.AccessDeniedPath,
                                                                           autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory })
+                                                                          _dbContextFactory,
+                                                                          _dbContextOptions })
             };
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -347,7 +352,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           autoControllerOptions.AccessDeniedPath,
                                                                           autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory })
+                                                                          _dbContextFactory,
+                                                                          _dbContextOptions })
             };
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -386,7 +392,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           autoControllerOptions.AccessDeniedPath,
                                                                           autoControllerOptions.JsonSerializerOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory })
+                                                                          _dbContextFactory,
+                                                                          _dbContextOptions })
             };
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -616,12 +623,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <param name="databaseType">Database type for DBContext</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContext factory</param>
-    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod, Func<T>? DbContextFactory)
+    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod, Func<T>? DbContextFactory, DbContextOptions<T>? dbContextOptions = null)
     {
         _connectionString = connString;
         DatabaseType = databaseType;
         _dbContextBeforeSaveChangesMethod = DbContextBeforeSaveChangesMethod;
         _dbContextFactory = DbContextFactory;
+        _dbContextOptions = dbContextOptions;
     }
     static AutoRouterService()
     {

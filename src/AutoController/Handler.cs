@@ -152,7 +152,8 @@ internal static class Handler
         string accessDeniedPath,
         Dictionary<string, RequestParamName> _requestParams,
         JsonSerializerOptions? jsonSerializerOptions = null,
-        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -166,7 +167,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
             IEnumerable<TE> queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
             }
@@ -200,7 +201,8 @@ internal static class Handler
                                                      string authentificationPath,
                                                      string accessDeniedPath,
                                                      Dictionary<string, RequestParamName> requestParams,
-                                                     Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
+                                                     Func<T>? customDbContextFactory = null,
+                                                     DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                                                                         where TE : class
     {
         return async (context) =>
@@ -213,7 +215,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
             int queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
@@ -266,7 +268,8 @@ internal static class Handler
         string accessDeniedPath,
         JsonSerializerOptions? jsonSerializerOptions = null,
         MethodInfo? dbContextBeforeSaveChangesMethod = null,
-        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
+        Func<T>? customDbContextFactory = null, 
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -281,7 +284,7 @@ internal static class Handler
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -407,7 +410,8 @@ internal static class Handler
         string accessDeniedPath,
         JsonSerializerOptions? jsonSerializerOptions = null,
         MethodInfo? dbContextBeforeSaveChangesMethod = null,
-        Func<T>? customDbContextFactory = null) where T : DbContext, IDisposable
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -422,7 +426,7 @@ internal static class Handler
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
