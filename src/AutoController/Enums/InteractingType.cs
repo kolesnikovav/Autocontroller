@@ -1,5 +1,3 @@
-using System;
-
 namespace AutoController;
 /// <summary>
 /// Discribe interacting method with autocontroller

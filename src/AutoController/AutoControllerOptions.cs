@@ -1,6 +1,4 @@
-using System;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoController;
 /// <summary>

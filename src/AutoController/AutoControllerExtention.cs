@@ -1,24 +1,14 @@
 using System;
-using System.Linq;
 using System.Text.Json;
 using System.Net.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.OpenApi;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.OpenApi.Interfaces;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Identity.Client;
 
 
 namespace AutoController;
