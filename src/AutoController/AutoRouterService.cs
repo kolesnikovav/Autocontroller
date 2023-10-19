@@ -621,6 +621,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <param name="databaseType">Database type for DBContext</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContext factory</param>
+    /// <param name="dbContextOptions">Custom DbContextOptions</param>
     public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod, Func<T>? DbContextFactory, DbContextOptions<T>? dbContextOptions = null)
     {
         _connectionString = connString;
