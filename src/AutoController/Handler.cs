@@ -28,20 +28,38 @@ internal static class Handler
     }
     private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
     {
-        switch (dbType)
+        return dbType switch
         {
-            case DatabaseTypes.SQLite: return SQLiteProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.SQLServer: return SQLServerProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.Postgres: return PostgresProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.MySQL: return MySQLProvider<T>.GetBuilder(connString);
-            default: return InMemoryProvider<T>.GetBuilder(connString);
-        }
+            DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString),
+            DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString),
+            DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString),
+            DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString),
+            _ => InMemoryProvider<T>.GetBuilder(connString),
+        };
     }
-    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null) where T : DbContext, IDisposable
+    private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString, DbContextOptions<T> dbContextOptions) where T : DbContext, IDisposable
+    {
+        return dbType switch
+        {
+            DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString, dbContextOptions),
+            _ => InMemoryProvider<T>.GetBuilder(connString, dbContextOptions),
+        };
+    }    
+    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
-        var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-
+        DbContextOptionsBuilder<T>? optionsBuilder;
+        if (dbContextOptions == null)
+        {
+            optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+        }
+        else
+        {
+            optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
+        }
         var options = optionsBuilder.Options;
         return (T)Activator.CreateInstance(typeof(T), new object[] { options })!;
     }
@@ -505,7 +523,7 @@ internal static class Handler
     /// <param name="types">The generic type parameters</param>
     /// <param name="instance">The object instance for execution</param>
     /// <param name="args">The arguments for invoked method</param>
-    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
+    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object?[] args)
     {
         var a = GetGenericMethod(name, types).Invoke(instance, args);
         if (a == null) return null!;

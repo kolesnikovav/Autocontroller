@@ -31,23 +31,7 @@ public class Startup
         services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
         services.AddEndpointsApiExplorer();
         services.AddAutoControllerOpenApiDefinition();
-        // services.AddSwaggerGen(c =>
-        //         c.CustomOperationIds(apiDesc =>
-        //         {
-        //              return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
-        //         });
-        // );
-        services.AddSwaggerGen(c =>
-        {
-
-            // Use method name as operationId
-            c.CustomOperationIds(apiDesc =>
-            {
-                Console.WriteLine(apiDesc.ActionDescriptor.ToString());
-                return null;
-                //return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
-            });
-        });
+        services.AddSwaggerGen();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,13 +46,9 @@ public class Startup
             WriteIndented = true
         };
         app.UseRouting();
-
         app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
         app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
         app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
-
-        
-
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapGet("/", async context =>

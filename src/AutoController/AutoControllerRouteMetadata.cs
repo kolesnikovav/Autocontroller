@@ -6,14 +6,12 @@ namespace AutoController;
 public sealed class AutoControllerRouteMetadata
 {
     /// <summary>
-    /// 
-    /// </summary>
     /// <param name="verb"></param>
     /// <param name="prefix"></param>
     /// <param name="template"></param>
     /// <param name="controller"></param>
-    /// <param name="action"></param> <summary>
-    /// <param name="interactingType"></param> <summary>
+    /// <param name="action"></param>
+    /// <param name="interactingType"></param>
     /// </summary>
     public AutoControllerRouteMetadata(string verb, string prefix, string template, string controller, string action, InteractingType interactingType)
     {

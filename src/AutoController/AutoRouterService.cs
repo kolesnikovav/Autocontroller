@@ -237,11 +237,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("GetHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
-                                                             _connectionString,
+                                                             autoControllerOptions.ConnectionString,
                                                               interactingType,
                                                               allowAnonimus,
                                                               autoControllerOptions.AuthentificationPath,
@@ -263,11 +263,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("GetCountOf",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
-                                                            _connectionString,
+                                                            autoControllerOptions.ConnectionString,
                                                             allowAnonimus,
                                                             autoControllerOptions.AuthentificationPath,
                                                             autoControllerOptions.AccessDeniedPath,
@@ -300,11 +300,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
-                                                                          _connectionString,
+                                                                          autoControllerOptions.ConnectionString,
                                                                           interactingType,
                                                                           autoControllerOptions.AuthentificationPath,
                                                                           autoControllerOptions.AccessDeniedPath,
@@ -338,10 +338,10 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("DeleteHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           Restrictions,
                                                                           DatabaseType,
-                                                                          _connectionString,
+                                                                          autoControllerOptions.ConnectionString,
                                                                           interactingType,
                                                                           autoControllerOptions.AuthentificationPath,
                                                                           autoControllerOptions.AccessDeniedPath,
@@ -376,11 +376,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
-                                                                          _connectionString,
+                                                                          autoControllerOptions.ConnectionString,
                                                                           interactingType,
                                                                           autoControllerOptions.AuthentificationPath,
                                                                           autoControllerOptions.AccessDeniedPath,
@@ -502,7 +502,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         var options = GetControllerOptions(routePrefix);
         if (options == null)
         {
-            options = new AutoControllerOptions
+            options = new AutoControllerOptions(connectionString)
             {
                 RoutePrefix = routePrefix
             };
@@ -576,7 +576,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         var options = GetControllerOptions(routePrefix);
         if (options == null)
         {
-            options = new AutoControllerOptions
+            options = new AutoControllerOptions(_connectionString ?? string.Empty)
             {
                 RoutePrefix = routePrefix
             };
