@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 using AutoController;
 
+namespace webapi;
 
 [MapToController("Blogs", InteractingType.JSON, 25, false)]
 // [GetRestriction(Roles = "Administrator")]
