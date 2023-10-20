@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json;
 
 namespace AutoController;
@@ -10,7 +9,7 @@ public class AutoControllerOptions : IAutoControllerOptions
     /// <summary>
     /// Start prefix segment for route
     /// </summary>
-    public string RoutePrefix { get; set; }
+    public string RoutePrefix { get; set; } = string.Empty;
     /// <summary>
     /// Controller default action for get request
     /// </summary>
@@ -70,18 +69,21 @@ public class AutoControllerOptions : IAutoControllerOptions
     /// <summary>
     /// Options for json serialization and deserialization
     /// </summary>
-    public JsonSerializerOptions JsonSerializerOptions { get; set; }
+    public JsonSerializerOptions? JsonSerializerOptions { get; set; }
     /// <summary>
     /// Autentification page path
     /// </summary>
-    public string AuthentificationPath { get; set; }
+    public string AuthentificationPath { get; set; } = string.Empty;
     /// <summary>
     /// Access denied page path
     /// </summary>
-    public string AccessDeniedPath { get; set; }
+    public string AccessDeniedPath { get; set; }  = string.Empty;
+
     /// <summary>
     /// Parameterless constructor
     /// </summary>
-    public AutoControllerOptions() { }
+    public AutoControllerOptions(string connectionString) {
+        ConnectionString = connectionString;
+     }
 
 }

@@ -1,49 +1,64 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Text;
 
 using System.Xml.Serialization;
 using System.IO;
 using System.Net.Http;
-using System.Linq.Dynamic;
 
 namespace AutoController;
 internal static class Handler
 {
-    private static MethodInfo GetActionBeforeSave<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeSave<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeSave", new Type[] { typeof(DbContext), typeof(string) });
     }
-    private static MethodInfo GetActionBeforeDelete<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeDelete<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeDelete", new Type[] { typeof(DbContext), typeof(string) });
     }
     private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
     {
-        switch (dbType)
+        return dbType switch
         {
-            case DatabaseTypes.SQLite: return SQLiteProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.SQLServer: return SQLServerProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.Postgres: return PostgresProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.MySQL: return MySQLProvider<T>.GetBuilder(connString);
-            default: return InMemoryProvider<T>.GetBuilder(connString);
-        }
+            DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString),
+            DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString),
+            DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString),
+            DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString),
+            _ => InMemoryProvider<T>.GetBuilder(connString),
+        };
     }
-    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T> factory = null) where T : DbContext, IDisposable
+    private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString, DbContextOptions<T> dbContextOptions) where T : DbContext, IDisposable
+    {
+        return dbType switch
+        {
+            DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString, dbContextOptions),
+            DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString, dbContextOptions),
+            _ => InMemoryProvider<T>.GetBuilder(connString, dbContextOptions),
+        };
+    }    
+    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
-        var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
-
+        DbContextOptionsBuilder<T>? optionsBuilder;
+        if (dbContextOptions == null)
+        {
+            optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+        }
+        else
+        {
+            optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
+        }
         var options = optionsBuilder.Options;
-        return (T)Activator.CreateInstance(typeof(T), new object[] { options });
+        return (T)Activator.CreateInstance(typeof(T), new object[] { options })!;
     }
 
     private static Stream GenerateStreamFromString(string s)
@@ -133,8 +148,9 @@ internal static class Handler
         string authentificationPath,
         string accessDeniedPath,
         Dictionary<string, RequestParamName> _requestParams,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -148,7 +164,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
             IEnumerable<TE> queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
             }
@@ -156,6 +172,8 @@ internal static class Handler
             {
                 byte[] jsonUtf8Bytes;
                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, jsonSerializerOptions);
+                context.Response.Headers.Add("content-type","application/json; charset=utf-8");
+                context.Response.StatusCode = 200; //                
                 await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
             }
             else if (interactingType == InteractingType.XML)
@@ -165,6 +183,8 @@ internal static class Handler
                 XmlSerializer serializer = new(typeof(List<TE>), a);
                 StringWriter textWriter = new();
                 serializer.Serialize(textWriter, queryResult.ToList());
+                context.Response.Headers.Add("content-type","application/xml; charset=utf-8");
+                context.Response.StatusCode = 200; //                   
                 await context.Response.WriteAsync(textWriter.ToString());
                 await textWriter.DisposeAsync();
             }
@@ -178,7 +198,8 @@ internal static class Handler
                                                      string authentificationPath,
                                                      string accessDeniedPath,
                                                      Dictionary<string, RequestParamName> requestParams,
-                                                     Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+                                                     Func<T>? customDbContextFactory = null,
+                                                     DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                                                                         where TE : class
     {
         return async (context) =>
@@ -191,26 +212,30 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
             int queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
             await context.Response.WriteAsync(queryResult.ToString());
         };
     }
-    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
         if (methodInfo == null) return result;
         object[] p = new object[] { dbcontext, reason };
-        result = (bool)methodInfo.Invoke(recivedObject, p);
+        var mResult = methodInfo!.Invoke(recivedObject, p) ?? true;
+        result = (bool)mResult;
+        if (result) return result;
         reason += (string)p[1];
         return result;
     }
-    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
@@ -218,12 +243,13 @@ internal static class Handler
         object[] p = new object[] { dbcontext, reason };
         foreach (TE el in recivedObjects)
         {
-            result = (bool)methodInfo.Invoke(el, p) && result;
+            var mResult = methodInfo!.Invoke(el, p) ?? true;
+            result = (bool)mResult && result;
             reason += (string)p[1] + "\n";
         }
         return result;
     }
-    private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[] parameters = null) where T : DbContext, IDisposable
+    private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[]? parameters = null) where T : DbContext, IDisposable
     {
         if (method == null) return;
         method.Invoke(context, parameters);
@@ -237,9 +263,10 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null, 
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -249,12 +276,12 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE?>? recivedDataList;
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -274,7 +301,10 @@ internal static class Handler
                             {
                                 dbcontext.Set<TE>().Update(recivedData);
                             }
-                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            if (dbContextBeforeSaveChangesMethod != null) 
+                            {
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                            }                            
                             await dbcontext.SaveChangesAsync();
                             byte[] jsonUtf8Bytes;
                             jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
@@ -290,10 +320,10 @@ internal static class Handler
                 {
                     try
                     {
-                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        recivedDataList = JsonSerializer.Deserialize<List<TE?>?>(body);
                         if (recivedDataList != null)
                         {
-                            if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            if (!CheckAllowedList<T, TE>(dbcontext, recivedDataList!, mi, out Reason))
                             {
                                 await context.Response.WriteAsync(Reason);
                             }
@@ -301,17 +331,23 @@ internal static class Handler
                             {
                                 if (!update)
                                 {
-                                    dbcontext.Set<TE>().AddRange(recivedDataList);
+                                    dbcontext.Set<TE>().AddRange(recivedDataList!);
                                 }
                                 else
                                 {
-                                    dbcontext.Set<TE>().UpdateRange(recivedDataList);
+                                    dbcontext.Set<TE>().UpdateRange(recivedDataList!);
                                 }
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                if (dbContextBeforeSaveChangesMethod != null) 
+                                {
+                                   DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                                }
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
                                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
-                                await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
+                                context.Response.Headers.Add("content-type","application/json; charset=utf-8");
+                                context.Response.StatusCode = 201; //created
+                                await context.Response
+                                .WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }
                         }
                     }
@@ -329,7 +365,7 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var recivedDataL = (List<TE>?)serializer.Deserialize(stream);
                 await stream.DisposeAsync();
                 if (recivedDataL != null && recivedDataL.Count > 0)
                 {
@@ -343,7 +379,10 @@ internal static class Handler
                         {
                             dbcontext.Set<TE>().UpdateRange(recivedDataL);
                         }
-                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        if (dbContextBeforeSaveChangesMethod != null) 
+                        {
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                        }                        
                         await dbcontext.SaveChangesAsync();
                         StringWriter textWriter = new();
                         serializer.Serialize(textWriter, recivedDataL.ToList());
@@ -366,9 +405,10 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -378,12 +418,12 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE?>? recivedDataList;
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, dbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -396,7 +436,10 @@ internal static class Handler
                         if (CheckAllowed<T, TE>(dbcontext, recivedData, mi, out Reason))
                         {
                             dbcontext.Set<TE>().Remove(recivedData);
-                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                            if (dbContextBeforeSaveChangesMethod != null) 
+                            {
+                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                            }                            
                             await dbcontext.SaveChangesAsync();
                             await context.Response.WriteAsync("Deleted");
                         }
@@ -411,13 +454,16 @@ internal static class Handler
                     // It can be array
                     try
                     {
-                        recivedDataList = JsonSerializer.Deserialize<List<TE>>(body);
+                        recivedDataList = JsonSerializer.Deserialize<List<TE?>?>(body);
                         if (recivedDataList != null)
                         {
-                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataList, mi, out Reason))
+                            if (CheckAllowedList<T, TE>(dbcontext, recivedDataList!, mi, out Reason))
                             {
-                                dbcontext.Set<TE>().RemoveRange(recivedDataList);
-                                DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                                dbcontext.Set<TE>().RemoveRange(recivedDataList!);
+                                if (dbContextBeforeSaveChangesMethod != null) 
+                                {
+                                   DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                                }                                
                                 await dbcontext.SaveChangesAsync();
                                 await context.Response.WriteAsync("Deleted");
                             }
@@ -441,14 +487,17 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var deserialized = serializer.Deserialize(stream);
                 await stream.DisposeAsync();
-                if (recivedDataL != null && recivedDataL.Count > 0)
+                if (deserialized is List<TE> recivedDataL && recivedDataL.Count > 0)
                 {
                     if (CheckAllowedList<T, TE>(dbcontext, recivedDataL, mi, out Reason))
                     {
                         dbcontext.Set<TE>().RemoveRange(recivedDataL);
-                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        if (dbContextBeforeSaveChangesMethod != null) 
+                        {
+                            DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext); 
+                        }                        
                         await dbcontext.SaveChangesAsync();
                         await context.Response.WriteAsync("Deleted");
                     }
@@ -475,8 +524,10 @@ internal static class Handler
     /// <param name="types">The generic type parameters</param>
     /// <param name="instance">The object instance for execution</param>
     /// <param name="args">The arguments for invoked method</param>
-    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
+    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object?[] args)
     {
-        return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args);
+        var a = GetGenericMethod(name, types).Invoke(instance, args);
+        if (a == null) return null!;
+        return (RequestDelegate)a!;
     }
 }

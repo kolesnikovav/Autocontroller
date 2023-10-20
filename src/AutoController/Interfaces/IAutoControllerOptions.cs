@@ -1,13 +1,4 @@
-using System;
 using System.Text.Json;
-using System.Linq;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoController;
 
@@ -79,7 +70,7 @@ public interface IAutoControllerOptions
     /// <summary>
     /// Options for json serialization and deserialization
     /// </summary>
-    JsonSerializerOptions JsonSerializerOptions { get; set; }
+    JsonSerializerOptions? JsonSerializerOptions { get; set; }
     /// <summary>
     /// Authentification page path
     /// </summary>

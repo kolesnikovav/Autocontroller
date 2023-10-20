@@ -1,8 +1,4 @@
-using System;
 using System.Text.Json;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Sqlite;
 using AutoController;
 
 namespace webapi;
@@ -30,6 +25,7 @@ public class Startup
             options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
         services.AddEndpointsApiExplorer();
+        services.AddAutoControllerOpenApiDefinition();
         services.AddSwaggerGen();
     }
 
@@ -44,12 +40,10 @@ public class Startup
         {
             WriteIndented = true
         };
+        app.UseRouting();
         app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
         app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
         app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
-
-        app.UseRouting();
-
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapGet("/", async context =>
@@ -65,7 +59,6 @@ public class Startup
                 await context.Response.WriteAsync("Access Denied page");
             });
         });
-
         app.UseSwagger();
         app.UseSwaggerUI();
     }

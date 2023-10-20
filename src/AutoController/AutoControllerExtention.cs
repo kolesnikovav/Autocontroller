@@ -1,17 +1,15 @@
 using System;
-using System.Linq;
 using System.Text.Json;
 using System.Net.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace AutoController;
 /// <summary>
@@ -42,9 +40,17 @@ public static class AutoControllerExtention
     /// <param name="connString">Connection string</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContextFactory</param>
-    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, MethodInfo DbContextBeforeSaveChangesMethod = null, Func<T> DbContextFactory = null) where T : DbContext
+    /// <param name="dbContextOptions">Custom DbContextOptions</param>
+    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod = null, Func<T>? DbContextFactory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext
     {
-        AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory);
+        if (dbContextOptions == null)
+        {
+            AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory);
+        }
+        else
+        {
+            AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory, dbContextOptions);
+        }
         services.AddSingleton(typeof(AutoRouterService<T>));
     }
     /// <summary>
@@ -55,15 +61,57 @@ public static class AutoControllerExtention
     /// <param name="builder">The applicaton builder</param>
     public static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T : DbContext
     {
-        var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
-        return service;
+        var service = builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
+        return (AutoRouterService<T>)service;
     }
-    private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
+    private static IEndpointConventionBuilder MapAutoRoute(this IEndpointRouteBuilder endpointRouteBuilder, RouteKey key, RequestDelegate handler, string api_prefix, string controllerName, string actionName, InteractingType interactingType) 
     {
-        var routeHandler = new RouteHandler(parameters.Handler);
-        var routeBuilder = new RouteBuilder(builder, routeHandler);
-        routeBuilder.MapRoute(key.ToString(), key.Path);
-        builder.UseRouter(routeBuilder.Build());
+        IEndpointConventionBuilder result;
+        string verb;
+        if (key.HttpMethod == HttpMethod.Get)
+        {
+            verb = "GET";
+           result =  endpointRouteBuilder.MapGet(key.Path,handler); 
+        }
+        else if (key.HttpMethod == HttpMethod.Post)
+        {
+            verb = "POST";
+            result =  endpointRouteBuilder.MapPost(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Patch)
+        {
+            verb = "PATCH";
+            result = endpointRouteBuilder.MapPatch(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Delete)
+        {
+            verb = "DELETE";
+            result = endpointRouteBuilder.MapDelete(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Put)
+        {
+            verb = "PUT";
+            result = endpointRouteBuilder.MapPut(key.Path,handler);
+        } 
+        else
+        {
+            verb = "GET";
+            result =  endpointRouteBuilder.MapGet(key.Path,handler);
+        }
+        var metadata = new AutoControllerRouteMetadata(verb,api_prefix,key.Path,controllerName,actionName, interactingType);
+        return result
+        .WithName(key.Path)
+        .WithDescription(key.ToString())
+        .WithMetadata(metadata)
+        .WithGroupName(api_prefix)
+        .WithOpenApi(); 
+    }    
+    private static void AddRoute(IApplicationBuilder builder, string api_prefix, RouteKey key, RouteParameters parameters, InteractingType interactingType)
+    {
+        builder.UseEndpoints(e => 
+        {
+            var a =e.MapAutoRoute(key,parameters.Handler, api_prefix, parameters.ControllerName, parameters.ActionName, interactingType);
+        });
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
@@ -99,7 +147,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -140,10 +188,14 @@ public static class AutoControllerExtention
             DefaultPageParameter,
             DefaultItemsPerPageParameter,
             DefaultUpdateAction);
-        foreach (var route in autoRouter.Autoroutes)
+        var routes =  autoRouter.GetAutoroutes(routePrefix);
+        if (routes != null) 
         {
-            AddRoute(appBuilder, route.Key, route.Value);
-        }
+            foreach (var v in routes)
+            {
+                AddRoute(appBuilder, routePrefix , v.Key, v.Value, interactingType ?? InteractingType.JSON);
+            }            
+        }            
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
@@ -174,7 +226,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -213,10 +265,14 @@ public static class AutoControllerExtention
             DefaultPageParameter,
             DefaultItemsPerPageParameter,
             DefaultUpdateAction);
-        foreach (var route in autoRouter.Autoroutes)
+        var routes =  autoRouter.GetAutoroutes(routePrefix);
+        if (routes != null) 
         {
-            AddRoute(appBuilder, route.Key, route.Value);
-        }
+            foreach (var v in routes)
+            {
+                AddRoute(appBuilder, routePrefix , v.Key, v.Value, interactingType ?? InteractingType.JSON);
+            }
+        }   
     }
     /// <summary>
     /// Adds autocontroller for DBContext.
