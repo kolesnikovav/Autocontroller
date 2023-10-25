@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using AutoController;
 using System.Text.Json;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +42,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-app.MapControllers();
+
 
 app.UseRouting();
 app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
@@ -64,10 +68,21 @@ app.MapGet("/anauthorized", async context => {
 .WithDescription("Access Denied page")
 .WithOpenApi();
 
+app.MapControllers();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+var a = app.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
+foreach (var b in a.ActionDescriptors.Items)
+{
+    var rr = new ActionDescriptor();
+    rr.DisplayName="fsfd";
+    var c = b.EndpointMetadata;
+}
 
+
+//a.CreateControllerFactory()
 app.Run();

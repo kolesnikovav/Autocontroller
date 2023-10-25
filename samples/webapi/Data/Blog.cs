@@ -5,7 +5,7 @@ using AutoController;
 
 [MapToController("Blogs", InteractingType.JSON, 25, false)]
 // [GetRestriction(Roles = "Administrator")]
-[PostRestriction(Roles = "Administrator")]
+//[PostRestriction(Roles = "Administrator")]
 public class Blog : IActionBeforeSave<ApplicationDBContext>
 {
     [Key]
