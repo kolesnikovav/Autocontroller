@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace AutoController;
 /// <summary>
@@ -72,6 +74,13 @@ public class RouteParameters
     /// </summary>
     /// <value></value>
     public string ActionName { get; set; } = null!;
+    /// <summary>
+    /// ActionDescriptor
+    /// </summary> <summary>
+    /// 
+    /// </summary>
+    /// <value></value>
+    public ControllerActionDescriptor ActionDescriptor { get; set; } = null!;
 }
 /// <summary>
 /// Service that handle requests for Entityes
@@ -234,7 +243,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 EntityType = givenType,
                 ControllerName = controllerName,
                 ActionName = autoControllerOptions.DefaultGetAction,
-                Handler = Handler.GetRequestDelegate("GetHandler",
+                
+                Handler = HandlerHelper.GetRequestDelegate("GetHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
                                                         new object?[] {
@@ -249,8 +259,18 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                               requestParams,
                                                              autoControllerOptions.JsonSerializerOptions,
                                                              _dbContextFactory,
-                                                             _dbContextOptions })
+                                                             _dbContextOptions }),
+                ActionDescriptor = new ControllerActionDescriptor() {
+                    AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                        Template = defaultPath,
+                        Name="Get"
+                    },
+                    ControllerName=controllerName,
+                    DisplayName = rkeyDefault.ToString(),
+                    ControllerTypeInfo = givenType.GetTypeInfo(),
+                },                                                             
             };
+            rParam.ActionDescriptor.MethodInfo = rParam.Handler.GetMethodInfo();
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
@@ -261,7 +281,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 EntityType = givenType,
                 ControllerName = controllerName,
                 ActionName = autoControllerOptions.DefaultGetCountAction,
-                Handler = Handler.GetRequestDelegate("GetCountOf",
+                ActionDescriptor = new ControllerActionDescriptor() {
+                    AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                        Template = defaultPath,
+                        Name="Get"
+                    },
+                },                
+                Handler = HandlerHelper.GetRequestDelegate("GetCountOf",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
                                                         new object?[] {
@@ -276,6 +302,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                             _dbContextFactory,
                                                             _dbContextOptions })
             };
+            rParam.ActionDescriptor.MethodInfo = rParam.Handler.GetMethodInfo();
             apiRoutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
         }
@@ -299,7 +326,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 EntityType = givenType,
                 ControllerName = controllerName,
                 ActionName = autoControllerOptions.DefaultPostAction,
-                Handler = Handler.GetRequestDelegate("PostHandler",
+                ActionDescriptor = new ControllerActionDescriptor() {
+                    AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                        Template = defaultPath,
+                        Name="Post"
+                    },
+                },                
+                Handler = HandlerHelper.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
                                                         new object?[] {
@@ -315,6 +348,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextFactory,
                                                                           _dbContextOptions })
             };
+            rParam.ActionDescriptor.MethodInfo = rParam.Handler.GetMethodInfo();
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
@@ -338,7 +372,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 EntityType = givenType,
                 ControllerName = controllerName,
                 ActionName = autoControllerOptions.DefaultDeleteAction,
-                Handler = Handler.GetRequestDelegate("DeleteHandler",
+                ActionDescriptor = new ControllerActionDescriptor() {
+                    AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                        Template = defaultPath,
+                        Name="Delete"
+                    },
+                },                
+                Handler = HandlerHelper.GetRequestDelegate("DeleteHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
                                                         new object?[] {
@@ -353,6 +393,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextFactory,
                                                                           _dbContextOptions })
             };
+            rParam.ActionDescriptor.MethodInfo = rParam.Handler.GetMethodInfo();
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
@@ -377,7 +418,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 EntityType = givenType,
                 ControllerName = controllerName,
                 ActionName = autoControllerOptions.DefaultUpdateAction,
-                Handler = Handler.GetRequestDelegate("PostHandler",
+                ActionDescriptor = new ControllerActionDescriptor() {
+                    AttributeRouteInfo = new Microsoft.AspNetCore.Mvc.Routing.AttributeRouteInfo() {
+                        Template = defaultPath,
+                        Name="Put"
+                    },
+                },
+                Handler = HandlerHelper.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
                                                         new object?[] {
@@ -393,6 +440,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _dbContextFactory,
                                                                           _dbContextOptions })
             };
+            rParam.ActionDescriptor.MethodInfo = rParam.Handler.GetMethodInfo();
             apiRoutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }

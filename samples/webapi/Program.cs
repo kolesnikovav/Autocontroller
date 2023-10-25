@@ -76,9 +76,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 var a = app.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
+var ss = app.Services.GetRequiredService<AutoRouterService<ApplicationDBContext>>();
 foreach (var b in a.ActionDescriptors.Items)
 {
-    var rr = new ActionDescriptor();
+    var rr = new ControllerActionDescriptor();
     rr.DisplayName="fsfd";
     var c = b.EndpointMetadata;
 }

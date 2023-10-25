@@ -13,7 +13,7 @@ using System.IO;
 using System.Net.Http;
 
 namespace AutoController;
-internal static class Handler
+internal static class HandlerHelper
 {
     private static MethodInfo? GetActionBeforeSave<TE>() where TE : class
     {
@@ -512,7 +512,7 @@ internal static class Handler
     }
     private static MethodInfo GetGenericMethod(string name, Type[] types)
     {
-        MethodInfo mi = typeof(Handler).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(v => v.Name == name).FirstOrDefault() ?? throw (new ArgumentException("Method " + name + " does not exists", "name"));
+        MethodInfo mi = typeof(HandlerHelper).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(v => v.Name == name).FirstOrDefault() ?? throw (new ArgumentException("Method " + name + " does not exists", "name"));
         MethodInfo miGeneric = mi.MakeGenericMethod(types);
         return miGeneric;
     }
