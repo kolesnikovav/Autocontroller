@@ -11,7 +11,7 @@ public class MapToControllerGetParamAttribute : Attribute
     /// <summary>
     /// Map target property to specified controller param with name
     /// </summary>
-    public string ParamName { get; set; }
+    public string ParamName { get; set; } = null!;
     /// <summary>
     /// Determine that parameter is optional (can be ommited during request)
     /// True by default

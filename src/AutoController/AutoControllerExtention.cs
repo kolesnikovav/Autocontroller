@@ -42,7 +42,7 @@ public static class AutoControllerExtention
     /// <param name="connString">Connection string</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContextFactory</param>
-    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, MethodInfo DbContextBeforeSaveChangesMethod = null, Func<T> DbContextFactory = null) where T : DbContext
+    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod = null, Func<T>? DbContextFactory = null) where T : DbContext
     {
         AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory);
         services.AddSingleton(typeof(AutoRouterService<T>));
@@ -58,7 +58,7 @@ public static class AutoControllerExtention
     /// <param name="options">Database context options </param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContextFactory</param>
-    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, DbContextOptions<T> options, MethodInfo DbContextBeforeSaveChangesMethod = null, Func<T> DbContextFactory = null) where T : DbContext
+    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, DbContextOptions<T> options, MethodInfo? DbContextBeforeSaveChangesMethod = null, Func<T>? DbContextFactory = null) where T : DbContext
     {
         AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory, options);
         services.AddSingleton(typeof(AutoRouterService<T>));

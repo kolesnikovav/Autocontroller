@@ -80,10 +80,11 @@ internal static class Handler
         string AKey = AccessHelper.GetAccessKey(typeof(TE), null, requestMethod);
         if (allowAnonimus && context.Request.Method == HttpMethods.Get) return true;
         if (!restrictions.ContainsKey(AKey)) return true; // no restrictions!
-        if (!context.User.Identity.IsAuthenticated)
+        var autentificated = context.User.Identity?.IsAuthenticated ?? true;
+        if (!autentificated)
         {
             context.Response.Redirect(authentificationPath);
-            if (!context.User.Identity.IsAuthenticated)
+            if (!autentificated)
             {
                 context.Response.Redirect(authentificationPath);
                 return false;
