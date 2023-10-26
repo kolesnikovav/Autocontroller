@@ -21,12 +21,12 @@ public class RouteKey
     /// <summary>
     /// Request path
     /// </summary>
-    public string Path { get; set; }
+    public string Path { get; set; } =null!;
     /// <summary>
     /// Http request method
     /// Currently, GET and POST supported
     /// </summary>
-    public HttpMethod HttpMethod { get; set; }
+    public HttpMethod HttpMethod { get; set; } = null!;
     /// <summary>
     /// route key string presentation
     /// </summary>
@@ -179,7 +179,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
             {
                 EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
-                string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
+                string r = string.IsNullOrWhiteSpace(b?.ParamName) ? pInfo.Name : b.ParamName;
                 string route = routeClassName + "/{" + r + "}";
                 //"{controller}/{action}/{property}"
                 RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };

@@ -79,7 +79,7 @@ public interface IAutoControllerOptions
     /// <summary>
     /// Options for json serialization and deserialization
     /// </summary>
-    JsonSerializerOptions JsonSerializerOptions { get; set; }
+    JsonSerializerOptions? JsonSerializerOptions { get; set; }
     /// <summary>
     /// Authentification page path
     /// </summary>
