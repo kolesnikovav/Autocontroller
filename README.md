@@ -45,17 +45,13 @@ Install package via nugget
 dotnet add package AutoController
 ```
 Mark your entity type as a member of AutoController by using Attribute
+
 ```cs
 [MapToController(
     // name & adress of controller
-    "Blogs",
-    // interacting type
-    InteractingType.JSON,
-    // default pagesize
-    25,
-    // AllowAnonimus true by default
-    false)]
+    "Blogs")]
 ```
+
 Create some restrictions, if needed
 These attributes inherits from Authorize attribute and woks the same.
 It can be combined
@@ -79,7 +75,8 @@ using AutoController;
             // ---- Your code -----------//
             // Register Autocontroller in default DI container
             // you should describe database type and connection string here!
-            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
+            var connString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, connString);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -162,4 +159,3 @@ It returns reason text with responce.
         public bool DoBeforeDelete(T dbcontext, out string reason);
     }
 ```
-

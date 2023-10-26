@@ -4,6 +4,7 @@
 		<PackageId>AutoController</PackageId>
 		<Version>1.0.8</Version>
 		<Authors>Aleksandr Kolesnikov</Authors>
+		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<AssemblyName>AutoController</AssemblyName>
 		<PackageTags>asp-net-core;entity-framework;CRUD;controller;api</PackageTags>

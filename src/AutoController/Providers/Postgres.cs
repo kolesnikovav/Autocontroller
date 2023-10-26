@@ -11,4 +11,10 @@ internal static class PostgresProvider<T> where T : DbContext, IDisposable
         Builder.UseNpgsql(connString);
         return Builder;
     }
+    public static DbContextOptionsBuilder<T> GetBuilder(string connString, DbContextOptions<T> options)
+    {
+        var Builder = new DbContextOptionsBuilder<T>(options);
+        Builder.UseNpgsql(connString);
+        return Builder;
+    }    
 }

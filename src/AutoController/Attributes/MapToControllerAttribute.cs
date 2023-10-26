@@ -35,4 +35,15 @@ public class MapToControllerAttribute : Attribute
         ItemsPerPage = itemsPerPage;
         AllowAnonimus = allowAnonimus;
     }
+    /// <summary>
+    /// Constructor with specified controller name
+    /// </summary>
+    /// <param name="controllerName"></param> <summary>
+    /// 
+    /// </summary>
+    public MapToControllerAttribute(string controllerName)
+    {
+        ControllerName = controllerName;
+        InteractingType = InteractingType.JSON;
+    }    
 }
