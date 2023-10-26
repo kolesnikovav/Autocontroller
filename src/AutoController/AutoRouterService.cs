@@ -44,7 +44,7 @@ public class RouteParameters
     /// <summary>
     /// Type of Entity in DBContext
     /// </summary>
-    public Type EntityType { get; set; }
+    public Type EntityType { get; set; } = null!;
     /// <summary>
     ///
     /// </summary>
@@ -52,7 +52,7 @@ public class RouteParameters
     /// <summary>
     /// handler for request
     /// </summary>
-    public RequestDelegate Handler { get; set; }
+    public RequestDelegate Handler { get; set; } = null!;
 }
 /// <summary>
 /// Service that handle requests for Entityes
@@ -75,9 +75,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private static readonly Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
     private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
     private static readonly Type KeyAttributeType = typeof(KeyAttribute);
-    private static string _connectionString;
-    private static MethodInfo _dbContextBeforeSaveChangesMethod;
-    private static Func<T> _dbContextFactory;
+    private static string _connectionString = string.Empty;
+    private static MethodInfo? _dbContextBeforeSaveChangesMethod;
+    private static Func<T>? _dbContextFactory;
+
+    private static DbContextOptions<T>? _dbContextOptions = null;
     /// <summary>
     /// Database type for autocontroller
     /// </summary>
@@ -104,44 +106,44 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         {
             return new AutoControllerOptions()
             {
-                AccessDeniedPath = _accessDeniedPath,
-                AuthentificationPath = _authentificationPath,
-                RoutePrefix = _routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultPostAction = _defaultPostAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
+                AccessDeniedPath = _accessDeniedPath ?? string.Empty,
+                AuthentificationPath = _authentificationPath ?? string.Empty,
+                RoutePrefix = _routePrefix ?? string.Empty,
+                DefaultGetAction = _defaultGetAction ?? string.Empty,
+                DefaultGetCountAction = _defaultGetCountAction ?? string.Empty,
+                DefaultPostAction = _defaultPostAction ?? string.Empty,
+                DefaultDeleteAction = _defaultDeleteAction ?? string.Empty,
+                DefaultUpdateAction = _defaultUpdateAction ?? string.Empty,
+                DefaultFilterParameter = _defaultFilterParameter ?? string.Empty,
+                DefaultPageParameter = _defaultPageParameter ?? string.Empty,
+                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter ?? string.Empty,
+                DefaultSortParameter = _defaultSortParameter ?? string.Empty,
+                DefaultSortDirectionParameter = _defaultSortDirectionParameter ?? string.Empty,
                 InteractingType = _defaultInteractingType,
                 JsonSerializerOptions = _jsonOptions
             };
         }
     }
 
-    private string _routePrefix;
-    private string _startRoutePath;
+    private string? _routePrefix;
+    private string? _startRoutePath;
     private InteractingType? _defaultInteractingType;
-    private JsonSerializerOptions _jsonOptions;
-    private ILogger logger;
+    private JsonSerializerOptions? _jsonOptions;
+    private ILogger? logger;
 
-    private string _authentificationPath;
-    private string _accessDeniedPath;
-    private string _defaultGetAction;
-    private string _defaultGetCountAction;
-    private string _defaultPostAction;
-    private string _defaultDeleteAction;
-    private string _defaultUpdateAction;
-    private string _defaultFilterParameter;
-    private string _defaultSortParameter;
-    private string _defaultSortDirectionParameter;
-    private string _defaultPageParameter;
-    private string _defaultItemsPerPageParameter;
-    private Dictionary<string, RequestParamName> _requestParams;
+    private string? _authentificationPath;
+    private string? _accessDeniedPath;
+    private string? _defaultGetAction;
+    private string? _defaultGetCountAction;
+    private string? _defaultPostAction;
+    private string? _defaultDeleteAction;
+    private string? _defaultUpdateAction;
+    private string? _defaultFilterParameter;
+    private string? _defaultSortParameter;
+    private string? _defaultSortDirectionParameter;
+    private string? _defaultPageParameter;
+    private string? _defaultItemsPerPageParameter;
+    private Dictionary<string, RequestParamName>? _requestParams;
     private void LogInformation(string message)
     {
         logger?.LogInformation(message);
@@ -159,7 +161,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         foreach (PropertyInfo pInfo in givenType.GetProperties())
         {
-            MapToControllerGetParamAttribute b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
+            MapToControllerGetParamAttribute? b = pInfo.GetCustomAttribute(MapToControllerGetParamAttributeType) as MapToControllerGetParamAttribute;
             if (b != null)
             {
                 string r = string.IsNullOrWhiteSpace(b.ParamName) ? pInfo.Name : b.ParamName;
@@ -265,7 +267,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("GetHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
@@ -276,7 +278,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                               _accessDeniedPath,
                                                               _requestParams,
                                                              _jsonOptions,
-                                                             _dbContextFactory })
+                                                             _dbContextFactory,
+                                                             _dbContextOptions })
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -289,7 +292,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("GetCountOf",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
@@ -317,7 +320,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
@@ -346,7 +349,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("DeleteHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           Restrictions,
                                                                           DatabaseType,
                                                                           _connectionString,
@@ -374,7 +377,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 Handler = Handler.GetRequestDelegate("PostHandler",
                                                         new Type[] { typeof(T), givenType },
                                                         this,
-                                                        new object[] {
+                                                        new object?[] {
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
@@ -394,7 +397,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         if (givenType.IsClass)
         {
-            MapToControllerAttribute r = (MapToControllerAttribute)givenType.GetCustomAttribute(MapToControllerAttributeType);
+            var a = givenType.GetCustomAttribute(MapToControllerAttributeType);
+            MapToControllerAttribute? r =(MapToControllerAttribute?)a;
             if (r != null)
             {
                 if (!ControllerNames.ContainsKey(givenType))
@@ -477,7 +481,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
+        JsonSerializerOptions? jsonSerializerOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -563,7 +567,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
+        JsonSerializerOptions? jsonSerializerOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -628,7 +632,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// Retrive request response schema assosiated with api route prefix
     /// </summary>
     /// <param name="prefix">Route prefix</param>
-    public static IAutoControllerOptions GetOptions(string prefix)
+    public static IAutoControllerOptions? GetOptions(string prefix)
     {
         if (!ApiOptions.ContainsKey(prefix)) return null;
         return ApiOptions[prefix];
@@ -640,12 +644,14 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <param name="databaseType">Database type for DBContext</param>
     /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
     /// <param name="DbContextFactory">Custom DbContext factory</param>
-    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo DbContextBeforeSaveChangesMethod, Func<T> DbContextFactory)
+    /// <param name="dbContextOptions">Custom DbContext options</param>
+    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo DbContextBeforeSaveChangesMethod, Func<T> DbContextFactory, DbContextOptions<T>? dbContextOptions = null)
     {
         _connectionString = connString;
         DatabaseType = databaseType;
         _dbContextBeforeSaveChangesMethod = DbContextBeforeSaveChangesMethod;
         _dbContextFactory = DbContextFactory;
+        _dbContextOptions = dbContextOptions;
     }
     static AutoRouterService()
     {

@@ -23,11 +23,11 @@ public class RequestParamName
     /// <summary>
     /// User difined parameter name
     /// </summary>
-    public string UserDefinedValue { get; set; }
+    public string UserDefinedValue { get; set; }=string.Empty;
     /// <summary>
     /// Type to cast request data
     /// </summary>
-    public Type TypeToCast { get; set; }
+    public Type TypeToCast { get; set; } = typeof(string);
 }
 /// <summary>
 /// Container for request data
@@ -86,25 +86,25 @@ public static class RequestParams
         var result = new UserRequestParams();
         if (requestData.ContainsKey(reqDefinitions["page"].UserDefinedValue))
         {
-            uint.TryParse(requestData[reqDefinitions["page"].UserDefinedValue], out uint pageNumber);
+            _ = uint.TryParse(requestData[reqDefinitions["page"].UserDefinedValue], out uint pageNumber);
             result.pageNumber = pageNumber;
         }
         if (requestData.ContainsKey(reqDefinitions["size"].UserDefinedValue))
         {
-            uint.TryParse(requestData[reqDefinitions["size"].UserDefinedValue], out uint pageSize);
+            _ = uint.TryParse(requestData[reqDefinitions["size"].UserDefinedValue], out uint pageSize);
             result.pageSize = pageSize;
         }
         if (requestData.ContainsKey(reqDefinitions["filter"].UserDefinedValue))
         {
-            result.filter = requestData[reqDefinitions["filter"].UserDefinedValue];
+            result.filter = requestData[reqDefinitions["filter"].UserDefinedValue]!;
         }
         if (requestData.ContainsKey(reqDefinitions["sort"].UserDefinedValue))
         {
-            result.sort = requestData[reqDefinitions["sort"].UserDefinedValue];
+            result.sort = requestData[reqDefinitions["sort"].UserDefinedValue]!;
         }
         if (requestData.ContainsKey(reqDefinitions["sortdirection"].UserDefinedValue))
         {
-            result.sortDirection = requestData[reqDefinitions["sortdirection"].UserDefinedValue];
+            result.sortDirection = requestData[reqDefinitions["sortdirection"].UserDefinedValue]!;
         }
         return result;
     }

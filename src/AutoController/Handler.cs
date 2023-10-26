@@ -18,32 +18,47 @@ using System.Linq.Dynamic;
 namespace AutoController;
 internal static class Handler
 {
-    private static MethodInfo GetActionBeforeSave<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeSave<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeSave", new Type[] { typeof(DbContext), typeof(string) });
     }
-    private static MethodInfo GetActionBeforeDelete<TE>() where TE : class
+    private static MethodInfo? GetActionBeforeDelete<TE>() where TE : class
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeDelete", new Type[] { typeof(DbContext), typeof(string) });
     }
-    private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString) where T : DbContext, IDisposable
+    private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
-        switch (dbType)
+        if (dbContextOptions == null)
         {
-            case DatabaseTypes.SQLite: return SQLiteProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.SQLServer: return SQLServerProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.Postgres: return PostgresProvider<T>.GetBuilder(connString);
-            case DatabaseTypes.MySQL: return MySQLProvider<T>.GetBuilder(connString);
-            default: return InMemoryProvider<T>.GetBuilder(connString);
+            return dbType switch
+            {
+                DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString),
+                DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString),
+                DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString),
+                DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString),
+                _ => InMemoryProvider<T>.GetBuilder(connString),
+            };
+        }
+        else
+        {
+            return dbType switch
+            {
+                DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString, dbContextOptions),
+                DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString, dbContextOptions),
+                DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString, dbContextOptions),
+                DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString, dbContextOptions),
+                _ => InMemoryProvider<T>.GetBuilder(connString, dbContextOptions),
+            };
+
         }
     }
-    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T> factory = null) where T : DbContext, IDisposable
+    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
-        var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString);
+        var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
 
         var options = optionsBuilder.Options;
-        return (T)Activator.CreateInstance(typeof(T), new object[] { options });
+        return (T)Activator.CreateInstance(typeof(T), new object[] { options })!;
     }
 
     private static Stream GenerateStreamFromString(string s)
@@ -133,8 +148,9 @@ internal static class Handler
         string authentificationPath,
         string accessDeniedPath,
         Dictionary<string, RequestParamName> _requestParams,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -148,7 +164,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
             IEnumerable<TE> queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
             }
@@ -178,7 +194,8 @@ internal static class Handler
                                                      string authentificationPath,
                                                      string accessDeniedPath,
                                                      Dictionary<string, RequestParamName> requestParams,
-                                                     Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+                                                     Func<T>? customDbContextFactory = null,
+                                                     DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
                                                                                                         where TE : class
     {
         return async (context) =>
@@ -191,25 +208,25 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
             int queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory))
+            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory,customDbContextOptions))
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
             await context.Response.WriteAsync(queryResult.ToString());
         };
     }
-    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
+    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo? methodInfo, out string reason) where T : DbContext, IDisposable
                                                                                                       where TE : class
     {
         reason = "";
         bool result = true;
         if (methodInfo == null) return result;
         object[] p = new object[] { dbcontext, reason };
-        result = (bool)methodInfo.Invoke(recivedObject, p);
+        result = (bool?)methodInfo.Invoke(recivedObject, p) ?? true;
         reason += (string)p[1];
         return result;
     }
-    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo methodInfo, out string reason) where T : DbContext, IDisposable
+    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo? methodInfo, out string reason) where T : DbContext, IDisposable
                                                                                                       where TE : class
     {
         reason = "";
@@ -218,12 +235,12 @@ internal static class Handler
         object[] p = new object[] { dbcontext, reason };
         foreach (TE el in recivedObjects)
         {
-            result = (bool)methodInfo.Invoke(el, p) && result;
+            result = ((bool?)methodInfo.Invoke(el, p) ?? true) && result;
             reason += (string)p[1] + "\n";
         }
         return result;
     }
-    private static void DoBeforeContextSaveChanges<T>(MethodInfo method, T context, object[] parameters = null) where T : DbContext, IDisposable
+    private static void DoBeforeContextSaveChanges<T>(MethodInfo? method, T context, object[]? parameters = null) where T : DbContext, IDisposable
     {
         if (method == null) return;
         method.Invoke(context, parameters);
@@ -237,9 +254,10 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -249,12 +267,12 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE>? recivedDataList;
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -329,7 +347,7 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var recivedDataL = (List<TE>?)serializer.Deserialize(stream);
                 await stream.DisposeAsync();
                 if (recivedDataL != null && recivedDataL.Count > 0)
                 {
@@ -366,9 +384,10 @@ internal static class Handler
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonSerializerOptions = null,
-        MethodInfo dbContextBeforeSaveChangesMethod = null,
-        Func<T> customDbContextFactory = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        MethodInfo? dbContextBeforeSaveChangesMethod = null,
+        Func<T>? customDbContextFactory = null,
+        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -378,12 +397,12 @@ internal static class Handler
             {
                 return;
             }
-            TE recivedData;
-            List<TE> recivedDataList;
+            TE? recivedData;
+            List<TE>? recivedDataList;
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory);
+            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions);
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -441,7 +460,7 @@ internal static class Handler
                 Stream stream = GenerateStreamFromString(body);
                 XmlRootAttribute a = new("result");
                 XmlSerializer serializer = new(typeof(List<TE>), a);
-                var recivedDataL = (List<TE>)serializer.Deserialize(stream);
+                var recivedDataL = (List<TE>?)serializer.Deserialize(stream);
                 await stream.DisposeAsync();
                 if (recivedDataL != null && recivedDataL.Count > 0)
                 {
@@ -475,8 +494,8 @@ internal static class Handler
     /// <param name="types">The generic type parameters</param>
     /// <param name="instance">The object instance for execution</param>
     /// <param name="args">The arguments for invoked method</param>
-    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object[] args)
+    public static RequestDelegate GetRequestDelegate(string name, Type[] types, object instance, object?[] args)
     {
-        return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args);
+        return (RequestDelegate)GetGenericMethod(name, types).Invoke(instance, args)!;
     }
 }

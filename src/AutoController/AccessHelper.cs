@@ -16,9 +16,9 @@ public static class AccessHelper
     /// <summary>
     /// Retrive string access permition key
     /// </summary>
-    public static string GetAccessKey(Type givenType, PropertyInfo property, HttpMethod method)
+    public static string GetAccessKey(Type givenType, PropertyInfo? property, HttpMethod method)
     {
-        string p = (property == null) ? "null" : property.ToString();
+        string? p = (property == null) ? "null" : property.ToString();
         return givenType.ToString() + p + method.ToString();
     }
     /// <summary>

@@ -48,6 +48,22 @@ public static class AutoControllerExtention
         services.AddSingleton(typeof(AutoRouterService<T>));
     }
     /// <summary>
+    /// Adds AutoController as singletone service and register it in Dependency Injection
+    /// with Database context options
+    /// </summary>
+    /// <typeparam name="T">The type of your DBContext/>.</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="dbType">The type of Database</param>
+    /// <param name="connString">Connection string</param>
+    /// <param name="options">Database context options </param>
+    /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
+    /// <param name="DbContextFactory">Custom DbContextFactory</param>
+    public static void AddAutoController<T>(this IServiceCollection services, DatabaseTypes dbType, string connString, DbContextOptions<T> options, MethodInfo DbContextBeforeSaveChangesMethod = null, Func<T> DbContextFactory = null) where T : DbContext
+    {
+        AutoRouterService<T>.SetStaticParams(dbType, connString, DbContextBeforeSaveChangesMethod, DbContextFactory, options);
+        services.AddSingleton(typeof(AutoRouterService<T>));
+    }    
+    /// <summary>
     /// Retrives  AutoRouterService service for external use.
     ///
     /// </summary>
@@ -55,7 +71,7 @@ public static class AutoControllerExtention
     /// <param name="builder">The applicaton builder</param>
     public static AutoRouterService<T> GetAutoRouterService<T>(IApplicationBuilder builder) where T : DbContext
     {
-        var service = (AutoRouterService<T>)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
+        var service = (AutoRouterService<T>?)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
     private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
@@ -99,7 +115,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
@@ -174,7 +190,7 @@ public static class AutoControllerExtention
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
-        JsonSerializerOptions jsonOptions = null,
+        JsonSerializerOptions? jsonOptions = null,
         string DefaultGetAction = "Index",
         string DefaultGetCountAction = "Count",
         string DefaultPostAction = "Save",
