@@ -35,9 +35,18 @@ public class Startup(IConfiguration configuration)
         {
             WriteIndented = true
         };
+        var options = new AutoControllerOptions() {
+            JsonSerializerOptions = JsonOptions,
+            LogInformation = true,
+            RoutePrefix="api4",
+            AuthentificationPath  = "/login",
+            AccessDeniedPath = "/anauthorized"
+        };
+
         app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
         app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
         app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
+        app.UseAutoController<ApplicationDBContext>(options);
 
         app.UseRouting();
 
