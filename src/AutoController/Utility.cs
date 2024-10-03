@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Dynamic;
-using System.Linq.Dynamic;
 
 namespace AutoController;
 /// <summary>
@@ -68,7 +66,7 @@ public static class Utility
     public static Func<TSource, bool> GetPredicate<TSource>(string expressionString)
     {
         var param = Expression.Parameter(typeof(TSource), "x");
-        var e = new System.Linq.Dynamic.Core.Parser.ExpressionParser(new ParameterExpression[] { param }, expressionString, null, null);
+        var e = new System.Linq.Dynamic.Core.Parser.ExpressionParser([param], expressionString, null, null);
         var parsedExpr = e.Parse(typeof(bool));
         return Expression.Lambda<Func<TSource, bool>>(parsedExpr, param).Compile();
     }
