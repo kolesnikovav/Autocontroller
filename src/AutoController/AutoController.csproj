@@ -10,6 +10,7 @@
 		<PackageTags>asp-net-core;entity-framework;CRUD;controller;api</PackageTags>
 		<PackageProjectUrl>https://github.com/kolesnikovav/Autocontroller</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/kolesnikovav/Autocontroller.git</RepositoryUrl>
 		<Title>The Asp Net Core plugin for use with Entity Framework Core. Automaticly create controller (endpoint) for each entity</Title>
@@ -44,5 +45,6 @@
 		<PackageReference Include="System.Net.Http" Version="4.3.4"/>
 		<PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.5"/>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<None Include="README.md" Pack="true" PackagePath="\"/>
 	</ItemGroup>
 </Project>
