@@ -5,7 +5,7 @@ namespace AutoController;
 /// <summary>
 /// Implement this interface in your entity types
 /// </summary>
-public interface IActionBeforeDelete<T> where T : DbContext
+public interface  IActionBeforeDelete<T> where T : DbContext
 {
     /// <summary>
     /// Do something before delete
