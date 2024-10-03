@@ -61,7 +61,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     #region static members
     private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions =
                    [];
-    private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
+    private static readonly Dictionary<Type, List<EntityKeyDescribtion>> EntityKeys =
                    [];
     private static readonly Dictionary<string, IAutoControllerOptions> ApiOptions =
                    [];
@@ -72,7 +72,6 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
     private static readonly Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
     private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
-    private static readonly Type KeyAttributeType = typeof(KeyAttribute);
     private static string _connectionString = string.Empty;
     private static MethodInfo? _dbContextBeforeSaveChangesMethod;
     private static Func<T>? _dbContextFactory;
@@ -174,19 +173,19 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
 
             }
-            if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
-            {
-                EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
-                string r = string.IsNullOrWhiteSpace(b?.ParamName) ? pInfo.Name : b.ParamName;
-                string route = routeClassName + "/{" + r + "}";
-                //"{controller}/{action}/{property}"
-                RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
-                _autoroutes.Add(
-                    rkey,
-                    new RouteParameters() { EntityType = pInfo.PropertyType }
-                    );
-                LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
-            }
+            // if (pInfo.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
+            // {
+            //     EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = pInfo.Name, KeyType = pInfo.PropertyType });
+            //     string r = string.IsNullOrWhiteSpace(b?.ParamName) ? pInfo.Name : b.ParamName;
+            //     string route = routeClassName + "/{" + r + "}";
+            //     //"{controller}/{action}/{property}"
+            //     RouteKey rkey = new() { Path = route, HttpMethod = HttpMethod.Post };
+            //     _autoroutes.Add(
+            //         rkey,
+            //         new RouteParameters() { EntityType = pInfo.PropertyType }
+            //         );
+            //     LogInformation(string.Format("Add route {0} for {1} type {2}", rkey, pInfo.Name, pInfo.PropertyType));
+            // }
         }
     }
     private static void ProccessRestrictions(Type givenType, HttpMethod httpMethod)
@@ -231,11 +230,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 }
             }
         }
-        else if (restrictionsDelete.Count() > 0 && httpMethod == HttpMethod.Delete)
+        else if (restrictionsDelete.Any() && httpMethod == HttpMethod.Delete)
         {
-            if (!Restrictions.ContainsKey(AKey))
+            if (!Restrictions.TryGetValue(AKey, out List<AuthorizeAttribute>? value))
             {
-                Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                Restrictions.Add(AKey, []);
                 foreach (var r in restrictionsDelete)
                 {
                     Restrictions[AKey].Add((AuthorizeAttribute)r);
@@ -245,7 +244,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 foreach (var r in restrictionsDelete)
                 {
-                    Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    value.Add((AuthorizeAttribute)r);
                 }
             }
         }
@@ -403,10 +402,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             MapToControllerAttribute? r =(MapToControllerAttribute?)a;
             if (r != null)
             {
-                if (!ControllerNames.ContainsKey(givenType))
-                {
-                    ControllerNames.Add(givenType, r);
-                }
+                ControllerNames.TryAdd(givenType, r);
                 ProccessRestrictions(givenType, HttpMethod.Get);
                 ProccessRestrictions(givenType, HttpMethod.Post);
                 ProccessRestrictions(givenType, HttpMethod.Delete);
@@ -431,27 +427,27 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             AddUpdateRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
         }
     }
-    private static void RetriveEntityKeys(Type givenType)
-    {
-        if (givenType.IsClass)
-        {
-            PropertyInfo[] p = givenType.GetProperties();
-            foreach (PropertyInfo t in p)
-            {
-                if (t.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
-                {
-                    EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = t.Name, KeyType = t.PropertyType });
-                }
-            }
-        }
-        if (givenType.IsGenericType)
-        {
-            foreach (Type currentType in givenType.GetGenericArguments())
-            {
-                RetriveEntityKeys(currentType);
-            }
-        }
-    }
+    // private static void RetriveEntityKeys(Type entityType)
+    // {
+    //     // if (givenType.IsClass)
+    //     // {
+    //     //     PropertyInfo[] p = givenType.GetProperties();
+    //     //     foreach (PropertyInfo t in p)
+    //     //     {
+    //     //         if (t.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
+    //     //         {
+    //     //             EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = t.Name, KeyType = t.PropertyType });
+    //     //         }
+    //     //     }
+    //     // }
+    //     // if (givenType.IsGenericType)
+    //     // {
+    //     //     foreach (Type currentType in givenType.GetGenericArguments())
+    //     //     {
+    //     //         RetriveEntityKeys(currentType);
+    //     //     }
+    //     // }
+    // }
 
     /// <summary>
     /// Use version without database type and connection string!!!
@@ -654,14 +650,22 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         _dbContextBeforeSaveChangesMethod = DbContextBeforeSaveChangesMethod;
         _dbContextFactory = DbContextFactory;
         _dbContextOptions = dbContextOptions;
-    }
-    static AutoRouterService()
-    {
-        PropertyInfo[] p = typeof(T).GetProperties();
-        foreach (PropertyInfo t in p)
+
+        using var ctx = Handler.CreateContext<T>(_connectionString, DatabaseType, _dbContextFactory, _dbContextOptions);
+        foreach (Type entityType in  ctx.Model.GetEntityTypes().Select(t => t.ClrType).ToList())
         {
-            RetriveEntityKeys(t.PropertyType);
-            ProcessType(t.PropertyType);
-        }
+            var eType = ctx.Model.FindEntityType(entityType);
+            var keys = eType?.FindPrimaryKey()?.Properties.ToList() ?? [];
+            if (keys.Count > 0)
+            {
+                List<EntityKeyDescribtion> entityKeyDescribtions = [];
+                foreach (var key in keys)
+                {
+                    entityKeyDescribtions.Add(new EntityKeyDescribtion() { Name = key.Name, KeyType = key.ClrType});
+                }
+                EntityKeys.TryAdd(entityType, entityKeyDescribtions);
+                ProcessType(entityType);
+            }
+        }        
     }
 }
