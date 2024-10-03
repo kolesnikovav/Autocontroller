@@ -49,7 +49,7 @@ internal static class Handler
 
         }
     }
-    private static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
+    internal static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
         var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
@@ -58,7 +58,7 @@ internal static class Handler
         return (T)Activator.CreateInstance(typeof(T), [options])!;
     }
 
-    private static Stream GenerateStreamFromString(string s)
+    private static MemoryStream GenerateStreamFromString(string s)
     {
         var stream = new MemoryStream();
         var writer = new StreamWriter(stream);
@@ -138,7 +138,7 @@ internal static class Handler
     }
     private static RequestDelegate GetHandler<T, TE>(
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
-        Dictionary<Type, EntityKeyDescribtion> entityKeys,
+        Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
         DatabaseTypes dbType,
         string connString,
         InteractingType interactingType,
@@ -185,7 +185,7 @@ internal static class Handler
         };
     }
     private static RequestDelegate GetCountOf<T, TE>(Dictionary<string, List<AuthorizeAttribute>> restrictions,
-                                                     Dictionary<Type, EntityKeyDescribtion> entityKeys,
+                                                     Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
                                                      DatabaseTypes dbType,
                                                      string connString,
                                                      bool allowAnonimus,
