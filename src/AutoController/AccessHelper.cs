@@ -33,7 +33,7 @@ public static class AccessHelper
         {
             if (!string.IsNullOrWhiteSpace(r.Roles))
             {
-                var roles = !r.Roles.Contains(',', StringComparison.CurrentCulture) ? new string[] { r.Roles } : r.Roles.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
+                var roles = !r.Roles.Contains(',', StringComparison.CurrentCulture) ? [r.Roles] : r.Roles.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
                 foreach (var rL in roles)
                 {
                     if (context.User.IsInRole(rL)) return true; // success
@@ -41,7 +41,7 @@ public static class AccessHelper
             }
             if (!string.IsNullOrWhiteSpace(r.Policy))
             {
-                var policies = !r.Policy.Contains(',', StringComparison.CurrentCulture) ? new string[] { r.Policy } : r.Policy.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
+                var policies = !r.Policy.Contains(',', StringComparison.CurrentCulture) ? [r.Policy] : r.Policy.Split(",").Where(v => !string.IsNullOrWhiteSpace(v));
                 var serv = context.RequestServices.GetServices<IAuthorizationService>();
                 foreach (var w in serv)
                 {

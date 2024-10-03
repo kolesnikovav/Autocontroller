@@ -1,18 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Net.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoController;
 /// <summary>

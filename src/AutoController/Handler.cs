@@ -1,30 +1,27 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Text;
 
 using System.Xml.Serialization;
 using System.IO;
 using System.Net.Http;
-using System.Linq.Dynamic;
 
 namespace AutoController;
 internal static class Handler
 {
     private static MethodInfo? GetActionBeforeSave<TE>() where TE : class
     {
-        return typeof(TE).GetRuntimeMethod("DoBeforeSave", new Type[] { typeof(DbContext), typeof(string) });
+        return typeof(TE).GetRuntimeMethod("DoBeforeSave", [typeof(DbContext), typeof(string)]);
     }
     private static MethodInfo? GetActionBeforeDelete<TE>() where TE : class
     {
-        return typeof(TE).GetRuntimeMethod("DoBeforeDelete", new Type[] { typeof(DbContext), typeof(string) });
+        return typeof(TE).GetRuntimeMethod("DoBeforeDelete", [typeof(DbContext), typeof(string)]);
     }
     private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
@@ -58,7 +55,7 @@ internal static class Handler
         var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
 
         var options = optionsBuilder.Options;
-        return (T)Activator.CreateInstance(typeof(T), new object[] { options })!;
+        return (T)Activator.CreateInstance(typeof(T), [options])!;
     }
 
     private static Stream GenerateStreamFromString(string s)
@@ -222,7 +219,7 @@ internal static class Handler
         reason = "";
         bool result = true;
         if (methodInfo == null) return result;
-        object[] p = new object[] { dbcontext, reason };
+        object[] p = [dbcontext, reason];
         result = (bool?)methodInfo.Invoke(recivedObject, p) ?? true;
         reason += (string)p[1];
         return result;
@@ -233,7 +230,7 @@ internal static class Handler
         reason = "";
         bool result = true;
         if (methodInfo == null) return result;
-        object[] p = new object[] { dbcontext, reason };
+        object[] p = [dbcontext, reason];
         foreach (TE el in recivedObjects)
         {
             result = ((bool?)methodInfo.Invoke(el, p) ?? true) && result;

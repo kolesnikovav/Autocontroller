@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
@@ -62,13 +60,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
 {
     #region static members
     private static readonly Dictionary<string, List<AuthorizeAttribute>> Restrictions =
-                   new();
+                   [];
     private static readonly Dictionary<Type, EntityKeyDescribtion> EntityKeys =
-                   new();
+                   [];
     private static readonly Dictionary<string, IAutoControllerOptions> ApiOptions =
-                   new();
+                   [];
     private static readonly Dictionary<Type, MapToControllerAttribute> ControllerNames =
-                   new();
+                   [];
     private static readonly Type MapToControllerGetParamAttributeType = typeof(MapToControllerGetParamAttribute);
     private static readonly Type MapToControllerAttributeType = typeof(MapToControllerAttribute);
     private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
@@ -88,7 +86,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <summary>
     /// The Dictionary with all used routes
     /// </summary>
-    private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = new Dictionary<RouteKey, RouteParameters>();
+    private readonly Dictionary<RouteKey, RouteParameters> _autoroutes = [];
 
     /// <summary>
     /// The Dictionary with all used routes
@@ -215,11 +213,11 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 }
             }
         }
-        else if (restrictionsPost.Count() > 0 && httpMethod == HttpMethod.Post)
+        else if (restrictionsPost.Any() && httpMethod == HttpMethod.Post)
         {
-            if (!Restrictions.ContainsKey(AKey))
+            if (!Restrictions.TryGetValue(AKey, out List<AuthorizeAttribute>? value))
             {
-                Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                Restrictions.Add(AKey, []);
                 foreach (var r in restrictionsPost)
                 {
                     Restrictions[AKey].Add((AuthorizeAttribute)r);
@@ -229,7 +227,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 foreach (var r in restrictionsPost)
                 {
-                    Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    value.Add((AuthorizeAttribute)r);
                 }
             }
         }
@@ -265,9 +263,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("GetHandler",
-                                                        new Type[] { typeof(T), givenType },
+                                                        [typeof(T), givenType],
                                                         this,
-                                                        new object?[] {
+                                                        [
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
@@ -279,7 +277,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                               _requestParams,
                                                              _jsonOptions,
                                                              _dbContextFactory,
-                                                             _dbContextOptions })
+                                                             _dbContextOptions ])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -290,9 +288,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("GetCountOf",
-                                                        new Type[] { typeof(T), givenType },
+                                                        [typeof(T), givenType],
                                                         this,
-                                                        new object?[] {
+                                                        [
                                                                 Restrictions,
                                                                 EntityKeys,
                                                                 DatabaseType,
@@ -302,7 +300,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                             _accessDeniedPath,
                                                             _requestParams,
                                                             _dbContextFactory,
-                                                            _dbContextOptions })
+                                                            _dbContextOptions ])
             };
             _autoroutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
@@ -319,9 +317,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("PostHandler",
-                                                        new Type[] { typeof(T), givenType },
+                                                        [typeof(T), givenType],
                                                         this,
-                                                        new object?[] {
+                                                        [
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
@@ -332,7 +330,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _jsonOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory,
-                                                                          _dbContextOptions })
+                                                                          _dbContextOptions ])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -349,9 +347,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("DeleteHandler",
-                                                        new Type[] { typeof(T), givenType },
+                                                        [typeof(T), givenType],
                                                         this,
-                                                        new object?[] {
+                                                        [
                                                                           Restrictions,
                                                                           DatabaseType,
                                                                           _connectionString,
@@ -361,7 +359,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _jsonOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory,
-                                                                          _dbContextOptions })
+                                                                          _dbContextOptions ])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -378,9 +376,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 EntityType = givenType,
                 Handler = Handler.GetRequestDelegate("PostHandler",
-                                                        new Type[] { typeof(T), givenType },
+                                                        [typeof(T), givenType],
                                                         this,
-                                                        new object?[] {
+                                                        [
                                                                           false,
                                                                           Restrictions,
                                                                           DatabaseType,
@@ -391,7 +389,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                                           _jsonOptions,
                                                                           _dbContextBeforeSaveChangesMethod,
                                                                           _dbContextFactory,
-                                                                          _dbContextOptions })
+                                                                          _dbContextOptions ])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -638,8 +636,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// <param name="prefix">Route prefix</param>
     public static IAutoControllerOptions? GetOptions(string prefix)
     {
-        if (!ApiOptions.ContainsKey(prefix)) return null;
-        return ApiOptions[prefix];
+        if (!ApiOptions.TryGetValue(prefix, out IAutoControllerOptions? value)) return null;
+        return value;
     }
     /// <summary>
     /// Sets static parameters for dbcontext
