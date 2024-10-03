@@ -9,7 +9,7 @@
            "type": "coreclr",
            "request": "launch",
            "preLaunchTask": "build-test",
-           "program": "${workspaceFolder}/test/ControllerTests/bin/Debug/net7.0/ControllerTests.dll",
+           "program": "${workspaceFolder}/test/ControllerTests/bin/Debug/net8.0/ControllerTests.dll",
            "args": [],
            "cwd": "${workspaceFolder}/test/ControllerTests",
            "stopAtEntry": false,
