@@ -52,7 +52,7 @@ internal static class Handler
     internal static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
     {
         if (factory != null) return factory();
-        var optionsBuilder = GetDBSpecificOptionsBuilder<T>(dbType, connString, dbContextOptions);
+        var optionsBuilder = GetDBSpecificOptionsBuilder(dbType, connString, dbContextOptions);
 
         var options = optionsBuilder.Options;
         return (T)Activator.CreateInstance(typeof(T), [options])!;
@@ -76,7 +76,7 @@ internal static class Handler
     {
         string AKey = AccessHelper.GetAccessKey(typeof(TE), null, requestMethod);
         if (allowAnonimus && context.Request.Method == HttpMethods.Get) return true;
-        if (!restrictions.ContainsKey(AKey)) return true; // no restrictions!
+        if (!restrictions.TryGetValue(AKey, out List<AuthorizeAttribute>? value)) return true; // no restrictions!
         var autentificated = context.User.Identity?.IsAuthenticated ?? true;
         if (!autentificated)
         {
@@ -89,7 +89,7 @@ internal static class Handler
         }
         else // user is authentificated
         {
-            return AccessHelper.EvaluateAccessRightsAsync(context, restrictions[AKey]);
+            return AccessHelper.EvaluateAccessRightsAsync(context, value);
         }
         return true;
     }
@@ -104,16 +104,16 @@ internal static class Handler
             {
                 if (!string.IsNullOrWhiteSpace(QueryParams.sortDirection))
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).ToList<TE>();
+                    queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort)];
                 }
                 else
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort).ToList<TE>();
+                    queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort)];
                 }
             }
             else
             {
-                queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).ToList<TE>();
+                queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter)];
             }
         }
         else
@@ -122,16 +122,16 @@ internal static class Handler
             {
                 if (!string.IsNullOrWhiteSpace(QueryParams.sortDirection))
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                    queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderByDescending(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize)];
                 }
                 else
                 {
-                    queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                    queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).OrderBy(QueryParams.sort).Skip(skip).Take((int)QueryParams.pageSize)];
                 }
             }
             else
             {
-                queryResult = dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).Skip(skip).Take((int)QueryParams.pageSize).ToList<TE>();
+                queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(QueryParams.filter).Skip(skip).Take((int)QueryParams.pageSize)];
             }
         }
         return queryResult;

@@ -196,9 +196,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         var restrictionsDelete = givenType.GetCustomAttributes(DeleteRestictionAttributeType);
         if (restrictionsGet.Count() > 0)
         {
-            if (!Restrictions.ContainsKey(AKey))
+            if (!Restrictions.TryGetValue(AKey, out List<AuthorizeAttribute>? value))
             {
-                Restrictions.Add(AKey, new List<AuthorizeAttribute>());
+                Restrictions.Add(AKey, []);
                 foreach (var r in restrictionsGet)
                 {
                     Restrictions[AKey].Add((AuthorizeAttribute)r);
@@ -208,7 +208,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             {
                 foreach (var r in restrictionsGet)
                 {
-                    Restrictions[AKey].Add((AuthorizeAttribute)r);
+                    value.Add((AuthorizeAttribute)r);
                 }
             }
         }
@@ -427,28 +427,6 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             AddUpdateRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
         }
     }
-    // private static void RetriveEntityKeys(Type entityType)
-    // {
-    //     // if (givenType.IsClass)
-    //     // {
-    //     //     PropertyInfo[] p = givenType.GetProperties();
-    //     //     foreach (PropertyInfo t in p)
-    //     //     {
-    //     //         if (t.GetCustomAttribute(KeyAttributeType) is KeyAttribute k)
-    //     //         {
-    //     //             EntityKeys.TryAdd(givenType, new EntityKeyDescribtion { Name = t.Name, KeyType = t.PropertyType });
-    //     //         }
-    //     //     }
-    //     // }
-    //     // if (givenType.IsGenericType)
-    //     // {
-    //     //     foreach (Type currentType in givenType.GetGenericArguments())
-    //     //     {
-    //     //         RetriveEntityKeys(currentType);
-    //     //     }
-    //     // }
-    // }
-
     /// <summary>
     /// Use version without database type and connection string!!!
     /// Using System.Reflection generates api controller for given type and properties
@@ -651,7 +629,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         _dbContextFactory = DbContextFactory;
         _dbContextOptions = dbContextOptions;
 
-        using var ctx = Handler.CreateContext<T>(_connectionString, DatabaseType, _dbContextFactory, _dbContextOptions);
+        using var ctx = Handler.CreateContext(_connectionString, DatabaseType, _dbContextFactory, _dbContextOptions);
         foreach (Type entityType in  ctx.Model.GetEntityTypes().Select(t => t.ClrType).ToList())
         {
             var eType = ctx.Model.FindEntityType(entityType);
