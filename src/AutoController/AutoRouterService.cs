@@ -410,87 +410,52 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     /// Using System.Reflection generates api controller for given type and properties
     /// By default, Controller name is the same as class name
     /// </summary>
-    /// <param name="routePrefix">Prefix segment for controller</param>
-    /// <param name="databaseType">Database type for DBContext</param>
-    /// <param name="connectionString">Database connection string</param>
-    /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
-    /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
-    /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
-    /// <param name="authentificationPath">Autentification page path</param>
-    /// <param name="accessDeniedPath">Access denied page path</param>
-    /// <param name="DefaultGetCountAction">Sets the Route path for GetCount action. Default = Count</param>
-    /// <param name="DefaultPostAction">Sets the the Route path for Save data via POST Request. Default = Save</param>
-    /// <param name="DefaultDeleteAction">Sets the the Route path for Delete items via DELETE Request. Default = Delete</param>
-    /// <param name="DefaultFilterParameter">Sets the parameter name wich describe filter expression. Default = filter</param>
-    /// <param name="DefaultSortParameter">Sets the parameter name wich describe field to sort result. Default = sort</param>
-    /// <param name="DefaultSortDirectionParameter">Sets the parameter name wich describe sortdirection. Default = sortdirection</param>
-    /// <param name="DefaultPageParameter">Sets the parameter name of page number. Default = page</param>
-    /// <param name="DefaultItemsPerPageParameter">Sets the parameter name of page size. Default = size</param>
-    /// <param name="DefaultUpdateAction">Sets the the Route path for Update data via PUT Request. Default = Update</param>
-    [Obsolete("Use version without database type & connection string")]
+    /// <param name="autoControllerOptions">Options for controller</param>
+    /// <param name="serviceProvider">IServiceProvider for Service collection</param>
     public void GetAutoControllers(
-        string routePrefix,
-        IServiceProvider serviceProvider,
-        InteractingType? interactingType,
-        string authentificationPath,
-        string accessDeniedPath,
-        JsonSerializerOptions? jsonSerializerOptions = null,
-        string DefaultGetAction = "Index",
-        string DefaultGetCountAction = "Count",
-        string DefaultPostAction = "Save",
-        string DefaultDeleteAction = "Delete",
-        string DefaultFilterParameter = "filter",
-        string DefaultSortParameter = "sort",
-        string DefaultSortDirectionParameter = "sortdirection",
-        string DefaultPageParameter = "page",
-        string DefaultItemsPerPageParameter = "size",
-        string DefaultUpdateAction = "Update")
+        IAutoControllerOptions autoControllerOptions, IServiceProvider serviceProvider)
+        // string routePrefix,
+        // IServiceProvider serviceProvider,
+        // InteractingType? interactingType,
+        // string authentificationPath,
+        // string accessDeniedPath,
+        // JsonSerializerOptions? jsonSerializerOptions = null,
+        // string DefaultGetAction = "Index",
+        // string DefaultGetCountAction = "Count",
+        // string DefaultPostAction = "Save",
+        // string DefaultDeleteAction = "Delete",
+        // string DefaultFilterParameter = "filter",
+        // string DefaultSortParameter = "sort",
+        // string DefaultSortDirectionParameter = "sortdirection",
+        // string DefaultPageParameter = "page",
+        // string DefaultItemsPerPageParameter = "size",
+        // string DefaultUpdateAction = "Update")
     {
-        _routePrefix = routePrefix;
-        _defaultInteractingType = interactingType;
-        _authentificationPath = authentificationPath;
-        _accessDeniedPath = accessDeniedPath;
-        _jsonOptions = jsonSerializerOptions;
-        _defaultGetAction = DefaultGetAction;
-        _defaultGetCountAction = DefaultGetCountAction;
-        _defaultPostAction = DefaultPostAction;
-        _defaultDeleteAction = DefaultDeleteAction;
-        _defaultUpdateAction = DefaultUpdateAction;
-        _defaultFilterParameter = DefaultFilterParameter;
-        _defaultSortParameter = DefaultSortParameter;
-        _defaultSortDirectionParameter = DefaultSortDirectionParameter;
-        _defaultPageParameter = DefaultPageParameter;
-        _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
-        _startRoutePath = string.IsNullOrWhiteSpace(_routePrefix) ? string.Empty : _routePrefix + "/";
-        _requestParams = RequestParams.Create(
-            _defaultPageParameter,
-            _defaultItemsPerPageParameter,
-            _defaultFilterParameter,
-            _defaultSortParameter,
-            _defaultSortDirectionParameter
-        );
+        // _routePrefix = routePrefix;
+        // _defaultInteractingType = interactingType;
+        // _authentificationPath = authentificationPath;
+        // _accessDeniedPath = accessDeniedPath;
+        // _jsonOptions = jsonSerializerOptions;
+        // _defaultGetAction = DefaultGetAction;
+        // _defaultGetCountAction = DefaultGetCountAction;
+        // _defaultPostAction = DefaultPostAction;
+        // _defaultDeleteAction = DefaultDeleteAction;
+        // _defaultUpdateAction = DefaultUpdateAction;
+        // _defaultFilterParameter = DefaultFilterParameter;
+        // _defaultSortParameter = DefaultSortParameter;
+        // _defaultSortDirectionParameter = DefaultSortDirectionParameter;
+        // _defaultPageParameter = DefaultPageParameter;
+        // _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
+        // _startRoutePath = string.IsNullOrWhiteSpace(_routePrefix) ? string.Empty : _routePrefix + "/";
+        // _requestParams = RequestParams.Create(
+        //     _defaultPageParameter,
+        //     _defaultItemsPerPageParameter,
+        //     _defaultFilterParameter,
+        //     _defaultSortParameter,
+        //     _defaultSortDirectionParameter
+        // );
         // found keys of entity for filering results
-        if (!ApiOptions.ContainsKey(routePrefix))
-        {
-            ApiOptions.Add(routePrefix, new AutoControllerOptions
-            {
-                RoutePrefix = routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultPostAction = _defaultPostAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions,
-                AuthentificationPath = _authentificationPath,
-                AccessDeniedPath = _accessDeniedPath
-            });
-        }
+        ApiOptions.TryAdd(autoControllerOptions.RoutePrefix, autoControllerOptions);
         CreateRoutes(serviceProvider);
     }
     /// <summary>
