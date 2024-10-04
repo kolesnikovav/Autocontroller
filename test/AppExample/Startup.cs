@@ -29,7 +29,7 @@ public class Startup
     {
         var dbName = Guid.NewGuid().ToString();
         services.AddDbContext<DbContextExample.AppDBContext>(opt => opt.UseInMemoryDatabase(databaseName: dbName), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-        services.AddAutoController<DbContextExample.AppDBContext>(DatabaseTypes.InMemory, dbName);
+        services.AddAutoController<DbContextExample.AppDBContext>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,10 +43,16 @@ public class Startup
         {
             WriteIndented = true
         };
-        app.UseAutoController<DbContextExample.AppDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
-        app.UseAutoController<DbContextExample.AppDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
-        app.UseAutoController<DbContextExample.AppDBContext>("api3", true, null, "/login", "/anauthorized");
+        var options = new AutoControllerOptions() {
+            JsonSerializerOptions = JsonOptions,
+            LogInformation = true,
+            RoutePrefix="api",
+            AuthentificationPath  = "/login",
+            AccessDeniedPath = "/anauthorized"
+        };
 
+
+        app.UseAutoController<DbContextExample.AppDBContext>(options);
         app.UseRouting();
 
         app.UseEndpoints(endpoints =>
