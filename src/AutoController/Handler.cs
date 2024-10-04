@@ -106,36 +106,32 @@ internal static class Handler
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
         Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
         IServiceProvider serviceProvider,
-        InteractingType interactingType,
-        bool allowAnonimus,
-        string authentificationPath,
-        string accessDeniedPath,
-        Dictionary<string, RequestParamName> _requestParams,
-        JsonSerializerOptions? jsonSerializerOptions = null) where T : DbContext, IDisposable
-                                                            where TE : class
+        IAutoControllerOptions options,
+        bool allowAnonimus) where T : DbContext, IDisposable
+                            where TE : class
     {
         return async (context) =>
         {
-            bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus, authentificationPath, accessDeniedPath);
+            bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus, options.AuthentificationPath, options.AccessDeniedPath);
             if (!authResult)
             {
                 return;
             }
             var e = entityKeys;
-            var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
+            var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
             IEnumerable<TE> queryResult;
 
             using T dbcontext = serviceProvider.GetService<T>()!;
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
             }
-            if (interactingType == InteractingType.JSON)
+            if (options.InteractingType == InteractingType.JSON)
             {
                 byte[] jsonUtf8Bytes;
-                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, jsonSerializerOptions);
+                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, options.JsonSerializerOptions);
                 await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
             }
-            else if (interactingType == InteractingType.XML)
+            else if (options.InteractingType == InteractingType.XML)
             {
                 XmlRootAttribute a = new("result");
                 // XmlSerializer does not support IEnumerable<T>
@@ -150,20 +146,18 @@ internal static class Handler
     private static RequestDelegate GetCountOf<T, TE>(Dictionary<string, List<AuthorizeAttribute>> restrictions,
                                                      Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
                                                      IServiceProvider serviceProvider,
-                                                     bool allowAnonimus,
-                                                     string authentificationPath,
-                                                     string accessDeniedPath,
-                                                     Dictionary<string, RequestParamName> requestParams) where T : DbContext, IDisposable
-                                                                                                        where TE : class
+                                                     IAutoControllerOptions options,
+                                                     bool allowAnonimus) where T : DbContext, IDisposable
+                                                                         where TE : class
     {
         return async (context) =>
         {
-            bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus, authentificationPath, accessDeniedPath);
+            bool authResult = Authorization<TE>(context, HttpMethod.Get, restrictions, allowAnonimus, options.AuthentificationPath, options.AccessDeniedPath);
             if (!authResult)
             {
                 return;
             }
-            var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
+            var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
             int queryResult;
 
             using (T dbcontext = serviceProvider.GetService<T>()!)
