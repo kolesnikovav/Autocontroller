@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace AutoController;
@@ -79,4 +80,8 @@ public interface IAutoControllerOptions
     /// Access denied page path
     /// </summary>
     string AccessDeniedPath { get; set; }
+    /// <summary>
+    /// Get request parameter names (page, size, filter,...) 
+    /// </summary>
+    Dictionary<string, RequestParamName> RequestParamNames { get;}
 }

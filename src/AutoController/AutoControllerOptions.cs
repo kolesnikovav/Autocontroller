@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Text.Json;
+using MySqlX.XDevAPI.Common;
 
 namespace AutoController;
 /// <summary>
@@ -78,6 +80,24 @@ public class AutoControllerOptions : IAutoControllerOptions
     /// Access denied page path
     /// </summary>
     public string AccessDeniedPath { get; set; }= string.Empty;
+    /// <summary>
+    /// Parameterless constructor
+    /// </summary>
+    public Dictionary<string, RequestParamName> RequestParamNames 
+    { 
+        get 
+        {
+            var result = new Dictionary<string, RequestParamName>
+            {
+                { "page", new RequestParamName() { UserDefinedValue = DefaultPageParameter, TypeToCast = typeof(uint) } },
+                { "size", new RequestParamName() { UserDefinedValue = DefaultItemsPerPageParameter, TypeToCast = typeof(uint) } },
+                { "filter", new RequestParamName() { UserDefinedValue = DefaultFilterParameter, TypeToCast = typeof(string) } },
+                { "sort", new RequestParamName() { UserDefinedValue = DefaultSortParameter, TypeToCast = typeof(string) } },
+                { "sortdirection", new RequestParamName() { UserDefinedValue = DefaultSortDirectionParameter, TypeToCast = typeof(string) } }
+            };
+            return result;
+        }
+    } 
     /// <summary>
     /// Parameterless constructor
     /// </summary>

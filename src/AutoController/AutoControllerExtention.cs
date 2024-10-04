@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace AutoController;
 /// <summary>
@@ -22,7 +24,26 @@ public static class AutoControllerExtention
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
     public static void AddAutoController<T>(this IServiceCollection services) where T : DbContext
     {
-        services.AddSingleton(typeof(AutoRouterService<T>));
+        AutoRouterService<T> instance = new();
+        
+        IServiceProvider serviceProvider =  services.BuildServiceProvider();
+        using var ctx = serviceProvider.GetRequiredService<T>();
+        foreach (Type entityType in  ctx.Model.GetEntityTypes().Select(t => t.ClrType).ToList())
+        {
+            var eType = ctx.Model.FindEntityType(entityType);
+            var keys = eType?.FindPrimaryKey()?.Properties.ToList() ?? [];
+            if (keys.Count > 0)
+            {
+                List<EntityKeyDescribtion> entityKeyDescribtions = [];
+                foreach (var key in keys)
+                {
+                    entityKeyDescribtions.Add(new EntityKeyDescribtion() { Name = key.Name, KeyType = key.ClrType});
+                }
+                AutoRouterService<T>.AddEntityKey(entityType,entityKeyDescribtions);
+                AutoRouterService<T>.ProcessType(entityType);
+            }
+        }
+        services.AddSingleton(typeof(AutoRouterService<T>), instance);
     }
     /// <summary>
     /// Retrives  AutoRouterService service for external use.
