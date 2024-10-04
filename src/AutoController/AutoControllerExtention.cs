@@ -1,7 +1,5 @@
 using System;
-using System.Text.Json;
 using Microsoft.AspNetCore.Routing;
-using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,83 +42,7 @@ public static class AutoControllerExtention
         routeBuilder.MapRoute(key.ToString(), key.Path);
         builder.UseRouter(routeBuilder.Build());
     }
-    /// <summary>
-    /// Adds autocontroller for DBContext.
-    ///
-    /// </summary>
-    /// <typeparam name="T">The DBContext derived type</typeparam>
-    /// <param name="appBuilder">The instance of ApplicationBuilder</param>
-    /// <param name="routePrefix">start prefix for route</param>
-    /// <param name="useLogging">log information for route</param>
-    /// <param name="databaseType">The type of your database</param>
-    /// <param name="connectionString">Database connection string</param>
-    /// <param name="interactingType">Interacting type</param>
-    /// <param name="authentificationPath">Application authentification path</param>
-    /// <param name="accessDeniedPath">Application access denied page path</param>
-    /// <param name="jsonOptions">Sets the JsonSerializerOptions</param>
-    /// <param name="DefaultGetAction">The action path of default GET request. Default = Index</param>
-    /// <param name="DefaultGetCountAction">The action path of default Count GET request. Default = Count</param>
-    /// <param name="DefaultPostAction">The action path of default POST request. Default = Save</param>
-    /// <param name="DefaultDeleteAction">The action path of default DELETE request. Default = Delete</param>
-    /// <param name="DefaultFilterParameter">default = filter</param>
-    /// <param name="DefaultSortParameter">default = sort</param>
-    /// <param name="DefaultSortDirectionParameter">default = sortdirection</param>
-    /// <param name="DefaultPageParameter">default = page</param>
-    /// <param name="DefaultItemsPerPageParameter">default = size</param>
-    /// <param name="DefaultUpdateAction">The action path of default PUT request. Default = Update</param>
-    [Obsolete("Use version without database type and connection string")]
-    public static void UseAutoController<T>(
-        this IApplicationBuilder appBuilder,
-        string routePrefix,
-        bool useLogging,
-        DatabaseTypes databaseType,
-        string connectionString,
-        InteractingType? interactingType,
-        string authentificationPath,
-        string accessDeniedPath,
-        JsonSerializerOptions? jsonOptions = null,
-        string DefaultGetAction = "Index",
-        string DefaultGetCountAction = "Count",
-        string DefaultPostAction = "Save",
-        string DefaultDeleteAction = "Delete",
-        string DefaultFilterParameter = "filter",
-        string DefaultSortParameter = "sort",
-        string DefaultSortDirectionParameter = "sortdirection",
-        string DefaultPageParameter = "page",
-        string DefaultItemsPerPageParameter = "size",
-        string DefaultUpdateAction = "Update"
-        ) where T : DbContext
-    {
-        ArgumentNullException.ThrowIfNull(appBuilder);
-        var logger = GetOrCreateLogger(appBuilder, LogCategoryName);
-        AutoRouterService<T> autoRouter = GetAutoRouterService<T>(appBuilder);
-        if (useLogging)
-        {
-            autoRouter.AttachToLogger(logger);
-        }
-        var serviceProvider = appBuilder.ApplicationServices.GetService<IServiceProvider>();
-        autoRouter.GetAutoControllers(
-            routePrefix,
-            serviceProvider!,
-            interactingType,
-            authentificationPath,
-            accessDeniedPath,
-            jsonOptions,
-            DefaultGetAction,
-            DefaultGetCountAction,
-            DefaultPostAction,
-            DefaultDeleteAction,
-            DefaultFilterParameter,
-            DefaultSortParameter,
-            DefaultSortDirectionParameter,
-            DefaultPageParameter,
-            DefaultItemsPerPageParameter,
-            DefaultUpdateAction);
-        foreach (var route in autoRouter.Autoroutes)
-        {
-            AddRoute(appBuilder, route.Key, route.Value);
-        }
-    }
+
     /// <summary>
     /// Adds autocontroller for DBContext.
     ///
@@ -130,8 +52,19 @@ public static class AutoControllerExtention
     /// <param name="options">Options for autocontroller</param>
     public static void UseAutoController<T>(
         this IApplicationBuilder appBuilder,
-        IAutoControllerOptions options) where T : DbContext
+        IAutoControllerOptions? options = null) where T : DbContext
     {
+        ArgumentNullException.ThrowIfNull(appBuilder);
+        var actualOptions = options ?? new AutoControllerOptions();
+        var logger = GetOrCreateLogger(appBuilder, LogCategoryName);
+        AutoRouterService<T> autoRouter = GetAutoRouterService<T>(appBuilder);
+        if (actualOptions.LogInformation)
+        {
+            autoRouter.AttachToLogger(logger);
+        }
+        var serviceProvider = appBuilder.ApplicationServices.GetService<IServiceProvider>();
+        ArgumentNullException.ThrowIfNull(serviceProvider);        
+        autoRouter.GetAutoControllers(actualOptions, serviceProvider);
     }
     private static ILogger GetOrCreateLogger(
         IApplicationBuilder appBuilder,
