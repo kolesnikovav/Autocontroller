@@ -11,6 +11,7 @@ using System.Text;
 using System.Xml.Serialization;
 using System.IO;
 using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AutoController;
 internal static class Handler
@@ -23,41 +24,6 @@ internal static class Handler
     {
         return typeof(TE).GetRuntimeMethod("DoBeforeDelete", [typeof(DbContext), typeof(string)]);
     }
-    private static DbContextOptionsBuilder<T> GetDBSpecificOptionsBuilder<T>(DatabaseTypes dbType, string connString, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
-    {
-        if (dbContextOptions == null)
-        {
-            return dbType switch
-            {
-                DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString),
-                DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString),
-                DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString),
-                DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString),
-                _ => InMemoryProvider<T>.GetBuilder(connString),
-            };
-        }
-        else
-        {
-            return dbType switch
-            {
-                DatabaseTypes.SQLite => SQLiteProvider<T>.GetBuilder(connString, dbContextOptions),
-                DatabaseTypes.SQLServer => SQLServerProvider<T>.GetBuilder(connString, dbContextOptions),
-                DatabaseTypes.Postgres => PostgresProvider<T>.GetBuilder(connString, dbContextOptions),
-                DatabaseTypes.MySQL => MySQLProvider<T>.GetBuilder(connString, dbContextOptions),
-                _ => InMemoryProvider<T>.GetBuilder(connString, dbContextOptions),
-            };
-
-        }
-    }
-    internal static T CreateContext<T>(string connString, DatabaseTypes dbType, Func<T>? factory = null, DbContextOptions<T>? dbContextOptions = null) where T : DbContext, IDisposable
-    {
-        if (factory != null) return factory();
-        var optionsBuilder = GetDBSpecificOptionsBuilder(dbType, connString, dbContextOptions);
-
-        var options = optionsBuilder.Options;
-        return (T)Activator.CreateInstance(typeof(T), [options])!;
-    }
-
     private static MemoryStream GenerateStreamFromString(string s)
     {
         var stream = new MemoryStream();
@@ -139,16 +105,13 @@ internal static class Handler
     private static RequestDelegate GetHandler<T, TE>(
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
         Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
-        DatabaseTypes dbType,
-        string connString,
+        IServiceProvider serviceProvider,
         InteractingType interactingType,
         bool allowAnonimus,
         string authentificationPath,
         string accessDeniedPath,
         Dictionary<string, RequestParamName> _requestParams,
-        JsonSerializerOptions? jsonSerializerOptions = null,
-        Func<T>? customDbContextFactory = null,
-        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
+        JsonSerializerOptions? jsonSerializerOptions = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -162,7 +125,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, _requestParams);
             IEnumerable<TE> queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions))
+            using T dbcontext = serviceProvider.GetService<T>()!;
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
             }
@@ -186,14 +149,11 @@ internal static class Handler
     }
     private static RequestDelegate GetCountOf<T, TE>(Dictionary<string, List<AuthorizeAttribute>> restrictions,
                                                      Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
-                                                     DatabaseTypes dbType,
-                                                     string connString,
+                                                     IServiceProvider serviceProvider,
                                                      bool allowAnonimus,
                                                      string authentificationPath,
                                                      string accessDeniedPath,
-                                                     Dictionary<string, RequestParamName> requestParams,
-                                                     Func<T>? customDbContextFactory = null,
-                                                     DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
+                                                     Dictionary<string, RequestParamName> requestParams) where T : DbContext, IDisposable
                                                                                                         where TE : class
     {
         return async (context) =>
@@ -206,7 +166,7 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, requestParams);
             int queryResult;
 
-            using (T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory,customDbContextOptions))
+            using (T dbcontext = serviceProvider.GetService<T>()!)
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
@@ -247,15 +207,12 @@ internal static class Handler
     private static RequestDelegate PostHandler<T, TE>(
         bool update,
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
-        DatabaseTypes dbType,
-        string connString,
+        IServiceProvider serviceProvider,
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
         JsonSerializerOptions? jsonSerializerOptions = null,
-        MethodInfo? dbContextBeforeSaveChangesMethod = null,
-        Func<T>? customDbContextFactory = null,
-        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
+        MethodInfo? dbContextBeforeSaveChangesMethod = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -270,7 +227,7 @@ internal static class Handler
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions);
+            using T dbcontext = serviceProvider.GetService<T>()!;
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
@@ -377,15 +334,12 @@ internal static class Handler
     }
     private static RequestDelegate DeleteHandler<T, TE>(
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
-        DatabaseTypes dbType,
-        string connString,
+        IServiceProvider serviceProvider,
         InteractingType interactingType,
         string authentificationPath,
         string accessDeniedPath,
         JsonSerializerOptions? jsonSerializerOptions = null,
-        MethodInfo? dbContextBeforeSaveChangesMethod = null,
-        Func<T>? customDbContextFactory = null,
-        DbContextOptions<T>? customDbContextOptions = null) where T : DbContext, IDisposable
+        MethodInfo? dbContextBeforeSaveChangesMethod = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
@@ -400,7 +354,7 @@ internal static class Handler
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
 
-            using T dbcontext = CreateContext<T>(connString, dbType, customDbContextFactory, customDbContextOptions);
+            using T dbcontext = serviceProvider.GetService<T>()!;
             if (interactingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);

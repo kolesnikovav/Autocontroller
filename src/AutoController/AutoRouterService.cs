@@ -72,15 +72,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     private static readonly Type GetRestictionAttributeType = typeof(GetRestrictionAttribute);
     private static readonly Type PostRestictionAttributeType = typeof(PostRestrictionAttribute);
     private static readonly Type DeleteRestictionAttributeType = typeof(DeleteRestrictionAttribute);
-    private static string _connectionString = string.Empty;
-    private static MethodInfo? _dbContextBeforeSaveChangesMethod;
-    private static Func<T>? _dbContextFactory;
 
-    private static DbContextOptions<T>? _dbContextOptions = null;
-    /// <summary>
-    /// Database type for autocontroller
-    /// </summary>
-    private static DatabaseTypes DatabaseType { get; set; }
+    private static MethodInfo? _dbContextBeforeSaveChangesMethod;
     #endregion
     /// <summary>
     /// The Dictionary with all used routes
@@ -249,7 +242,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    private void AddGetRoutesForEntity(string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
+    private void AddGetRoutesForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
     {
         string basePath = _startRoutePath + controllerName;
         string countPath = basePath + "/" + _defaultGetCountAction;
@@ -267,16 +260,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         [
                                                                 Restrictions,
                                                                 EntityKeys,
-                                                                DatabaseType,
-                                                             _connectionString,
+                                                                serviceProvider,
                                                               interactingType,
                                                               allowAnonimus,
                                                               _authentificationPath,
                                                               _accessDeniedPath,
                                                               _requestParams,
-                                                             _jsonOptions,
-                                                             _dbContextFactory,
-                                                             _dbContextOptions ])
+                                                             _jsonOptions ])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -292,20 +282,17 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         [
                                                                 Restrictions,
                                                                 EntityKeys,
-                                                                DatabaseType,
-                                                            _connectionString,
+                                                                serviceProvider,
                                                             allowAnonimus,
                                                             _authentificationPath,
                                                             _accessDeniedPath,
-                                                            _requestParams,
-                                                            _dbContextFactory,
-                                                            _dbContextOptions ])
+                                                            _requestParams ])
             };
             _autoroutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
         }
     }
-    private void AddPostRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddPostRouteForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultPostAction;
@@ -321,21 +308,18 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         [
                                                                           false,
                                                                           Restrictions,
-                                                                          DatabaseType,
-                                                                          _connectionString,
+                                                                          serviceProvider,
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
                                                                           _jsonOptions,
-                                                                          _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory,
-                                                                          _dbContextOptions ])
+                                                                          _dbContextBeforeSaveChangesMethod])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddDeleteRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddDeleteRouteForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultDeleteAction;
@@ -350,21 +334,18 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         this,
                                                         [
                                                                           Restrictions,
-                                                                          DatabaseType,
-                                                                          _connectionString,
+                                                                          serviceProvider,
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
                                                                           _jsonOptions,
-                                                                          _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory,
-                                                                          _dbContextOptions ])
+                                                                          _dbContextBeforeSaveChangesMethod])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
     }
-    private void AddUpdateRouteForEntity(string controllerName, Type givenType, InteractingType interactingType)
+    private void AddUpdateRouteForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, InteractingType interactingType)
     {
         string basePath = _startRoutePath + controllerName;
         string defaultPath = basePath + "/" + _defaultUpdateAction;
@@ -380,15 +361,12 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         [
                                                                           false,
                                                                           Restrictions,
-                                                                          DatabaseType,
-                                                                          _connectionString,
+                                                                          serviceProvider,
                                                                           interactingType,
                                                                           _authentificationPath,
                                                                           _accessDeniedPath,
                                                                           _jsonOptions,
-                                                                          _dbContextBeforeSaveChangesMethod,
-                                                                          _dbContextFactory,
-                                                                          _dbContextOptions ])
+                                                                          _dbContextBeforeSaveChangesMethod])
             };
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
@@ -416,15 +394,15 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    private void CreateRoutes()
+    private void CreateRoutes(IServiceProvider serviceProvider)
     {
         foreach (var c in ControllerNames)
         {
             InteractingType usedInteractingType = _defaultInteractingType == null ? c.Value.InteractingType : (InteractingType)_defaultInteractingType;
-            AddGetRoutesForEntity(c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
-            AddPostRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
-            AddDeleteRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
-            AddUpdateRouteForEntity(c.Value.ControllerName, c.Key, usedInteractingType);
+            AddGetRoutesForEntity(serviceProvider, c.Value.ControllerName, c.Key, usedInteractingType, c.Value.AllowAnonimus);
+            AddPostRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddDeleteRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, usedInteractingType);
+            AddUpdateRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, usedInteractingType);
         }
     }
     /// <summary>
@@ -452,94 +430,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     [Obsolete("Use version without database type & connection string")]
     public void GetAutoControllers(
         string routePrefix,
-        DatabaseTypes databaseType,
-        string connectionString,
-        InteractingType? interactingType,
-        string authentificationPath,
-        string accessDeniedPath,
-        JsonSerializerOptions? jsonSerializerOptions = null,
-        string DefaultGetAction = "Index",
-        string DefaultGetCountAction = "Count",
-        string DefaultPostAction = "Save",
-        string DefaultDeleteAction = "Delete",
-        string DefaultFilterParameter = "filter",
-        string DefaultSortParameter = "sort",
-        string DefaultSortDirectionParameter = "sortdirection",
-        string DefaultPageParameter = "page",
-        string DefaultItemsPerPageParameter = "size",
-        string DefaultUpdateAction = "Update")
-    {
-        _connectionString = connectionString;
-        DatabaseType = databaseType;
-        _routePrefix = routePrefix;
-        _defaultInteractingType = interactingType;
-        _authentificationPath = authentificationPath;
-        _accessDeniedPath = accessDeniedPath;
-        _jsonOptions = jsonSerializerOptions;
-        _defaultGetAction = DefaultGetAction;
-        _defaultGetCountAction = DefaultGetCountAction;
-        _defaultPostAction = DefaultPostAction;
-        _defaultDeleteAction = DefaultDeleteAction;
-        _defaultUpdateAction = DefaultUpdateAction;
-        _defaultFilterParameter = DefaultFilterParameter;
-        _defaultSortParameter = DefaultSortParameter;
-        _defaultSortDirectionParameter = DefaultSortDirectionParameter;
-        _defaultPageParameter = DefaultPageParameter;
-        _defaultItemsPerPageParameter = DefaultItemsPerPageParameter;
-        _startRoutePath = string.IsNullOrWhiteSpace(_routePrefix) ? string.Empty : _routePrefix + "/";
-        _requestParams = RequestParams.Create(
-            _defaultPageParameter,
-            _defaultItemsPerPageParameter,
-            _defaultFilterParameter,
-            _defaultSortParameter,
-            _defaultSortDirectionParameter
-        );
-        // found keys of entity for filering results
-        if (!ApiOptions.ContainsKey(routePrefix))
-        {
-            ApiOptions.Add(routePrefix, new AutoControllerOptions
-            {
-                RoutePrefix = routePrefix,
-                DefaultGetAction = _defaultGetAction,
-                DefaultGetCountAction = _defaultGetCountAction,
-                DefaultFilterParameter = _defaultFilterParameter,
-                DefaultSortParameter = _defaultSortParameter,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter,
-                DefaultPageParameter = _defaultPageParameter,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter,
-                DefaultPostAction = _defaultPostAction,
-                DefaultUpdateAction = _defaultUpdateAction,
-                DefaultDeleteAction = _defaultDeleteAction,
-                DatabaseType = DatabaseType,
-                ConnectionString = _connectionString,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions,
-                AuthentificationPath = _authentificationPath,
-                AccessDeniedPath = _accessDeniedPath
-            });
-        }
-        CreateRoutes();
-    }
-    /// <summary>
-    /// Create routes for each marked entity type
-    /// </summary>
-    /// <param name="routePrefix">Prefix segment for controller</param>
-    /// <param name="interactingType">Designates interacting type with autocontroller. If null, interacting type of entity will be applied</param>
-    /// <param name="DefaultGetAction">Sets the JsonSerializerOptions</param>
-    /// <param name="jsonSerializerOptions">JsonSerializerOptions that will be applied during interacting</param>
-    /// <param name="authentificationPath">Autentification page path</param>
-    /// <param name="accessDeniedPath">Access denied page path</param>
-    /// <param name="DefaultGetCountAction">Sets the Route path for GetCount action. Default = Count</param>
-    /// <param name="DefaultPostAction">Sets the the Route path for Save data via POST Request. Default = Save</param>
-    /// <param name="DefaultDeleteAction">Sets the the Route path for Delete items via DELETE Request. Default = Delete</param>
-    /// <param name="DefaultFilterParameter">Sets the parameter name wich describe filter expression. Default = filter</param>
-    /// <param name="DefaultSortParameter">Sets the parameter name wich describe field to sort result. Default = sort</param>
-    /// <param name="DefaultSortDirectionParameter">Sets the parameter name wich describe sortdirection. Default = sortdirection</param>
-    /// <param name="DefaultPageParameter">Sets the parameter name of page number. Default = page</param>
-    /// <param name="DefaultItemsPerPageParameter">Sets the parameter name of page size. Default = size</param>
-    /// <param name="DefaultUpdateAction">Sets the the Route path for Update data via PUT Request. Default = Update</param>
-    public void GetAutoControllers(
-        string routePrefix,
+        IServiceProvider serviceProvider,
         InteractingType? interactingType,
         string authentificationPath,
         string accessDeniedPath,
@@ -594,15 +485,13 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                 DefaultPostAction = _defaultPostAction,
                 DefaultUpdateAction = _defaultUpdateAction,
                 DefaultDeleteAction = _defaultDeleteAction,
-                DatabaseType = DatabaseType,
-                ConnectionString = _connectionString,
                 InteractingType = _defaultInteractingType,
                 JsonSerializerOptions = _jsonOptions,
                 AuthentificationPath = _authentificationPath,
                 AccessDeniedPath = _accessDeniedPath
             });
         }
-        CreateRoutes();
+        CreateRoutes(serviceProvider);
     }
     /// <summary>
     /// Retrive request response schema assosiated with api route prefix
@@ -612,38 +501,5 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         if (!ApiOptions.TryGetValue(prefix, out IAutoControllerOptions? value)) return null;
         return value;
-    }
-    /// <summary>
-    /// Sets static parameters for dbcontext
-    /// </summary>
-    /// <param name="connString">Connection string</param>
-    /// <param name="databaseType">Database type for DBContext</param>
-    /// <param name="DbContextBeforeSaveChangesMethod">Method of DbContext to execute it before save data</param>
-    /// <param name="DbContextFactory">Custom DbContext factory</param>
-    /// <param name="dbContextOptions">Custom DbContext options</param>
-    public static void SetStaticParams(DatabaseTypes databaseType, string connString, MethodInfo? DbContextBeforeSaveChangesMethod, Func<T>? DbContextFactory, DbContextOptions<T>? dbContextOptions = null)
-    {
-        _connectionString = connString;
-        DatabaseType = databaseType;
-        _dbContextBeforeSaveChangesMethod = DbContextBeforeSaveChangesMethod;
-        _dbContextFactory = DbContextFactory;
-        _dbContextOptions = dbContextOptions;
-
-        using var ctx = Handler.CreateContext(_connectionString, DatabaseType, _dbContextFactory, _dbContextOptions);
-        foreach (Type entityType in  ctx.Model.GetEntityTypes().Select(t => t.ClrType).ToList())
-        {
-            var eType = ctx.Model.FindEntityType(entityType);
-            var keys = eType?.FindPrimaryKey()?.Properties.ToList() ?? [];
-            if (keys.Count > 0)
-            {
-                List<EntityKeyDescribtion> entityKeyDescribtions = [];
-                foreach (var key in keys)
-                {
-                    entityKeyDescribtions.Add(new EntityKeyDescribtion() { Name = key.Name, KeyType = key.ClrType});
-                }
-                EntityKeys.TryAdd(entityType, entityKeyDescribtions);
-                ProcessType(entityType);
-            }
-        }        
     }
 }
