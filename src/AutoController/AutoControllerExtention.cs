@@ -91,10 +91,7 @@ public static class AutoControllerExtention
         string DefaultUpdateAction = "Update"
         ) where T : DbContext
     {
-        if (appBuilder == null)
-        {
-            throw new ArgumentNullException(nameof(appBuilder));
-        }
+        ArgumentNullException.ThrowIfNull(appBuilder);
         var logger = GetOrCreateLogger(appBuilder, LogCategoryName);
         AutoRouterService<T> autoRouter = GetAutoRouterService<T>(appBuilder);
         if (useLogging)
@@ -135,23 +132,6 @@ public static class AutoControllerExtention
         this IApplicationBuilder appBuilder,
         IAutoControllerOptions options) where T : DbContext
     {
-        UseAutoController<T>(appBuilder,
-        options.RoutePrefix,
-         options.LogInformation,
-         options.InteractingType,
-         options.AuthentificationPath,
-         options.AccessDeniedPath,
-         options.JsonSerializerOptions,
-         options.DefaultGetAction,
-         options.DefaultGetCountAction,
-         options.DefaultPostAction,
-         options.DefaultDeleteAction,
-         options.DefaultFilterParameter,
-         options.DefaultSortParameter,
-         options.DefaultSortDirectionParameter,
-         options.DefaultPageParameter,
-         options.DefaultItemsPerPageParameter,
-         options.DefaultUpdateAction);
     }
     private static ILogger GetOrCreateLogger(
         IApplicationBuilder appBuilder,

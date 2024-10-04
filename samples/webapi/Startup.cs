@@ -19,7 +19,7 @@ public class Startup(IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDBContext>(options =>
             options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-        services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, Configuration.GetConnectionString("DefaultConnection"));
+        services.AddAutoController<ApplicationDBContext>();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
     }
@@ -38,14 +38,11 @@ public class Startup(IConfiguration configuration)
         var options = new AutoControllerOptions() {
             JsonSerializerOptions = JsonOptions,
             LogInformation = true,
-            RoutePrefix="api4",
+            RoutePrefix="api",
             AuthentificationPath  = "/login",
             AccessDeniedPath = "/anauthorized"
         };
 
-        app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, "/login", "/anauthorized", JsonOptions);
-        app.UseAutoController<ApplicationDBContext>("api2", true, InteractingType.XML, "/login", "/anauthorized");
-        app.UseAutoController<ApplicationDBContext>("api3", true, null, "/login", "/anauthorized");
         app.UseAutoController<ApplicationDBContext>(options);
 
         app.UseRouting();
