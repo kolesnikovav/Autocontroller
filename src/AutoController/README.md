@@ -11,33 +11,24 @@ CRUD actions becomes more easy!
 
 ## Supported features:
 
-<ul>
-<li>Pagination by default</li>
-<li>Sorting results</li>
-<li>Interacting type can be JSON or XML</li>
-<li>Flexible and adjustable request/response schema</li>
-<li>Filtering results</li>
-<li>Authentificated Access and Permitions Control</li>
-<li>Execute some Actions before save/delete</li>
-<li>Execute some Actions before DbContext SaveChanges/SaveChangesAsync</li>
-</ul>
+- Pagination by default
+- Sorting results
+- Interacting type can be JSON or XML
+- Flexible and adjustable request/response schema
+- Filtering results
+- Authentificated Access and Permitions Control
+- Execute some Actions before save/delete
+- Execute some Actions before DbContext SaveChanges/SaveChangesAsync
 
 Routers and handlers for paths will be created:
-<ul>
-<li>"/Your Entity/Index" GET</li>
-<li>"/Your Entity/Count" GET</li>
-<li>"/Your Entity/Save" POST</li>
-<li>"/Your Entity/Update" PUT</li>
-<li>"/Your Entity/Delete" DELETE</li>
-</ul>
-Interacting type can be JSON or XML.
 
-Database supported:
-<ul>
-<li>SQLLite</li>
-<li>SQLServer</li>
-<li>PostgreSQL</li>
-</ul>
+- "/Your Entity/Index" GET
+- "/Your Entity/Count" GET
+- "/Your Entity/Save" POST
+- "/Your Entity/Update" PUT
+- "/Your Entity/Delete" DELETE
+
+Interacting type can be JSON or XML.
 
 ## How to use
 Install package via nugget
@@ -74,31 +65,30 @@ using AutoController;
         {
             // ---- Your code -----------//
             // Register Autocontroller in default DI container
-            // you should describe database type and connection string here!
+            // you should add db context first!
             var connString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddAutoController<ApplicationDBContext>(DatabaseTypes.SQLite, connString);
+            services.AddDbContext<ApplicationDBContext>(options =>
+                options.UseSqlite(connString));
+            // then add AddAutoController service
+            services.AddAutoController<ApplicationDBContext>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // ---- Your code -----------//
-            // Create JsonSerializerOptions object if you use JSON interacting method
+            // Create your api
+            // handle requests with default options
+            app.UseAutoController<ApplicationDBContext>();
+            // You can configure your api
+            // RoutePrefix should be unique!
             var JsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
-            // Create your api
-            // handle requests for api/<your entity>/... paths with Json
-            app.UseAutoController<ApplicationDBContext>("api", true, InteractingType.JSON, JsonOptions);
-            // handle requests for apixml/<your entity>/... paths with XML
-            app.UseAutoController<ApplicationDBContext>("apixml", true, InteractingType.XML);
-            // handle requests for apijson/<your entity>/... paths with Json
-            app.UseAutoController<ApplicationDBContext>("apijson", true,  null, JsonOptions);
-            // ----- With options------------------
             var options = new AutoControllerOptions() {
                 JsonSerializerOptions = JsonOptions,
                 LogInformation = true,
-                RoutePrefix="api4",
+                RoutePrefix="api2",
                 AuthentificationPath  = "/login",
                 AccessDeniedPath = "/anauthorized"
             };
