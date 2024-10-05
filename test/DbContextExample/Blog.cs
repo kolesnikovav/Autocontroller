@@ -1,7 +1,6 @@
 ﻿using AutoController;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Sqlite;
 
 namespace DbContextExample;
 
