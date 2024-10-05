@@ -31,6 +31,7 @@ public class Startup(IConfiguration configuration)
         {
             app.UseDeveloperExceptionPage();
         }
+        
         var JsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true
@@ -44,7 +45,6 @@ public class Startup(IConfiguration configuration)
         };
 
         app.UseAutoController<ApplicationDBContext>(options);
-
         app.UseRouting();
 
         app.UseEndpoints(endpoints =>

@@ -86,6 +86,10 @@ public static class AutoControllerExtention
         var serviceProvider = appBuilder.ApplicationServices.GetService<IServiceProvider>();
         ArgumentNullException.ThrowIfNull(serviceProvider);        
         autoRouter.GetAutoControllers(actualOptions, serviceProvider);
+        foreach (var route in autoRouter.Autoroutes)
+        {
+            AddRoute(appBuilder, route.Key, route.Value);
+        }        
     }
     private static ILogger GetOrCreateLogger(
         IApplicationBuilder appBuilder,

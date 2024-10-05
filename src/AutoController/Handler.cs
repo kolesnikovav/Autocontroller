@@ -59,8 +59,9 @@ internal static class Handler
         }
         return true;
     }
-    private static IEnumerable<TE> GetDBQueryResult<T, TE>(T dbcontext, UserRequestParams QueryParams) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static IEnumerable<TE> GetDBQueryResult<T, TE>(T dbcontext, UserRequestParams QueryParams) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         IEnumerable<TE> queryResult;
         int skip = (int)((QueryParams.pageNumber - 1) * QueryParams.pageSize);
@@ -119,27 +120,26 @@ internal static class Handler
             }
             var e = entityKeys;
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
-            IEnumerable<TE> queryResult;
-
-            using T dbcontext = serviceProvider.GetService<T>()!;
+            using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
+            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!;
             {
-                queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
-            }
-            if (options.InteractingType == InteractingType.JSON)
-            {
-                byte[] jsonUtf8Bytes;
-                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, options.JsonSerializerOptions);
-                await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
-            }
-            else if (options.InteractingType == InteractingType.XML)
-            {
-                XmlRootAttribute a = new("result");
-                // XmlSerializer does not support IEnumerable<T>
-                XmlSerializer serializer = new(typeof(List<TE>), a);
-                StringWriter textWriter = new();
-                serializer.Serialize(textWriter, queryResult.ToList());
-                await context.Response.WriteAsync(textWriter.ToString());
-                await textWriter.DisposeAsync();
+                IEnumerable<TE> queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
+                if (options.InteractingType == InteractingType.JSON)
+                {
+                   byte[] jsonUtf8Bytes;
+                   jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, options.JsonSerializerOptions);
+                   await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
+                }
+                else if (options.InteractingType == InteractingType.XML)
+               {
+                   XmlRootAttribute a = new("result");
+                   // XmlSerializer does not support IEnumerable<T>
+                   XmlSerializer serializer = new(typeof(List<TE>), a);
+                   StringWriter textWriter = new();
+                   serializer.Serialize(textWriter, queryResult.ToList());
+                   await context.Response.WriteAsync(textWriter.ToString());
+                   await textWriter.DisposeAsync();
+               }                
             }
         };
     }
@@ -160,15 +160,17 @@ internal static class Handler
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
             int queryResult;
 
-            using (T dbcontext = serviceProvider.GetService<T>()!)
+            using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
+            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!;            
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
             await context.Response.WriteAsync(queryResult.ToString());
         };
     }
-    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo? methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowed<T, TE>(T dbcontext, TE recivedObject, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
@@ -178,8 +180,9 @@ internal static class Handler
         reason += (string)p[1];
         return result;
     }
-    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo? methodInfo, out string reason) where T : DbContext, IDisposable
-                                                                                                      where TE : class
+    private static bool CheckAllowedList<T, TE>(T dbcontext, List<TE> recivedObjects, MethodInfo? methodInfo, out string reason) 
+    where T : DbContext, IDisposable
+    where TE : class
     {
         reason = "";
         bool result = true;
@@ -202,16 +205,13 @@ internal static class Handler
         bool update,
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
         IServiceProvider serviceProvider,
-        InteractingType interactingType,
-        string authentificationPath,
-        string accessDeniedPath,
-        JsonSerializerOptions? jsonSerializerOptions = null,
+        IAutoControllerOptions options,
         MethodInfo? dbContextBeforeSaveChangesMethod = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
         {
-            bool authResult = Authorization<TE>(context, HttpMethod.Post, restrictions, false, authentificationPath, accessDeniedPath);
+            bool authResult = Authorization<TE>(context, HttpMethod.Post, restrictions, false, options.AuthentificationPath, options.AccessDeniedPath);
             if (!authResult)
             {
                 return;
@@ -221,8 +221,9 @@ internal static class Handler
             var mi = GetActionBeforeSave<TE>();
             string Reason = "";
 
-            using T dbcontext = serviceProvider.GetService<T>()!;
-            if (interactingType == InteractingType.JSON)
+            using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
+            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!;             
+            if (options.InteractingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
@@ -244,7 +245,7 @@ internal static class Handler
                             DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                             await dbcontext.SaveChangesAsync();
                             byte[] jsonUtf8Bytes;
-                            jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, jsonSerializerOptions);
+                            jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, options.JsonSerializerOptions);
                             await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                         }
                         else
@@ -277,7 +278,7 @@ internal static class Handler
                                 DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
-                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, jsonSerializerOptions);
+                                jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, options.JsonSerializerOptions);
                                 await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }
                         }
@@ -288,7 +289,7 @@ internal static class Handler
                     }
                 }
             }
-            else if (interactingType == InteractingType.XML)
+            else if (options.InteractingType == InteractingType.XML)
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
@@ -329,16 +330,13 @@ internal static class Handler
     private static RequestDelegate DeleteHandler<T, TE>(
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
         IServiceProvider serviceProvider,
-        InteractingType interactingType,
-        string authentificationPath,
-        string accessDeniedPath,
-        JsonSerializerOptions? jsonSerializerOptions = null,
+        IAutoControllerOptions options,
         MethodInfo? dbContextBeforeSaveChangesMethod = null) where T : DbContext, IDisposable
                                                             where TE : class
     {
         return async (context) =>
         {
-            bool authResult = Authorization<TE>(context, HttpMethod.Delete, restrictions, false, authentificationPath, accessDeniedPath);
+            bool authResult = Authorization<TE>(context, HttpMethod.Delete, restrictions, false, options.AuthentificationPath, options.AccessDeniedPath);
             if (!authResult)
             {
                 return;
@@ -347,9 +345,9 @@ internal static class Handler
             List<TE>? recivedDataList;
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
-
-            using T dbcontext = serviceProvider.GetService<T>()!;
-            if (interactingType == InteractingType.JSON)
+            using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
+            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!; 
+            if (options.InteractingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
@@ -398,7 +396,7 @@ internal static class Handler
                     }
                 }
             }
-            else if (interactingType == InteractingType.XML)
+            else if (options.InteractingType == InteractingType.XML)
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
