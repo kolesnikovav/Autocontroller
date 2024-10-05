@@ -87,53 +87,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         get => _autoroutes;
     }
-    /// <summary>
-    /// Returns current options for external use
-    /// </summary>
-    public IAutoControllerOptions Options
-    {
-        get
-        {
-            return new AutoControllerOptions()
-            {
-                AccessDeniedPath = _accessDeniedPath ?? string.Empty,
-                AuthentificationPath = _authentificationPath ?? string.Empty,
-                RoutePrefix = _routePrefix ?? string.Empty,
-                DefaultGetAction = _defaultGetAction ?? string.Empty,
-                DefaultGetCountAction = _defaultGetCountAction ?? string.Empty,
-                DefaultPostAction = _defaultPostAction ?? string.Empty,
-                DefaultDeleteAction = _defaultDeleteAction ?? string.Empty,
-                DefaultUpdateAction = _defaultUpdateAction ?? string.Empty,
-                DefaultFilterParameter = _defaultFilterParameter ?? string.Empty,
-                DefaultPageParameter = _defaultPageParameter ?? string.Empty,
-                DefaultItemsPerPageParameter = _defaultItemsPerPageParameter ?? string.Empty,
-                DefaultSortParameter = _defaultSortParameter ?? string.Empty,
-                DefaultSortDirectionParameter = _defaultSortDirectionParameter ?? string.Empty,
-                InteractingType = _defaultInteractingType,
-                JsonSerializerOptions = _jsonOptions
-            };
-        }
-    }
-
-    private string? _routePrefix;
-    private string? _startRoutePath;
-    private InteractingType? _defaultInteractingType;
-    private JsonSerializerOptions? _jsonOptions;
     private ILogger? logger;
-
-    private string? _authentificationPath;
-    private string? _accessDeniedPath;
-    private string? _defaultGetAction;
-    private string? _defaultGetCountAction;
-    private string? _defaultPostAction;
-    private string? _defaultDeleteAction;
-    private string? _defaultUpdateAction;
-    private string? _defaultFilterParameter;
-    private string? _defaultSortParameter;
-    private string? _defaultSortDirectionParameter;
-    private string? _defaultPageParameter;
-    private string? _defaultItemsPerPageParameter;
-    private Dictionary<string, RequestParamName>? _requestParams;
     private void LogInformation(string message)
     {
         logger?.LogInformation(message);
@@ -242,7 +196,6 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             }
         }
     }
-    //private void AddGetRoutesForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, InteractingType interactingType, bool allowAnonimus)
     private void AddGetRoutesForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, IAutoControllerOptions options, bool allowAnonimus)
     {
         string basePath = $"{options.RoutePrefix}/{controllerName}";
@@ -388,9 +341,9 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
         foreach (var c in ControllerNames)
         {
             AddGetRoutesForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions , c.Value.AllowAnonimus);
-            // AddPostRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
-            // AddDeleteRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
-            // AddUpdateRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
+            AddPostRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
+            AddDeleteRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
+            AddUpdateRouteForEntity(serviceProvider, c.Value.ControllerName, c.Key, autoControllerOptions);
         }
     }
     /// <summary>

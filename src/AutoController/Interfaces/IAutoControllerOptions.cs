@@ -67,7 +67,7 @@ public interface IAutoControllerOptions
     /// <summary>
     /// Interacting Type for autocontrolles
     /// </summary>
-    InteractingType? InteractingType { get; set; }
+    InteractingType InteractingType { get; set; }
     /// <summary>
     /// Options for json serialization and deserialization
     /// </summary>
