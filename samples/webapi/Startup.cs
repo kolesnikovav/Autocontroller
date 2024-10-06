@@ -43,8 +43,16 @@ public class Startup(IConfiguration configuration)
             AuthentificationPath  = "/login",
             AccessDeniedPath = "/anauthorized"
         };
+        var optionsXML = new AutoControllerOptions() {
+            InteractingType = InteractingType.XML,
+            LogInformation = true,
+            RoutePrefix="api2",
+            AuthentificationPath  = "/login",
+            AccessDeniedPath = "/anauthorized"
+        };        
 
         app.UseAutoController<ApplicationDBContext>(options);
+        app.UseAutoController<ApplicationDBContext>(optionsXML);
         app.UseRouting();
 
         app.UseEndpoints(endpoints =>
