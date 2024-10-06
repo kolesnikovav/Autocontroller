@@ -128,6 +128,8 @@ internal static class Handler
                 {
                    byte[] jsonUtf8Bytes;
                    jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(queryResult, options.JsonSerializerOptions);
+                   context.Response.Headers.ContentType="application/json";
+                   context.Response.Headers.ContentEncoding = "utf-8";
                    await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                 }
                 else if (options.InteractingType == InteractingType.XML)
@@ -137,6 +139,8 @@ internal static class Handler
                    XmlSerializer serializer = new(typeof(List<TE>), a);
                    StringWriter textWriter = new();
                    serializer.Serialize(textWriter, queryResult.ToList());
+                   context.Response.Headers.ContentType="application/xml";
+                   context.Response.Headers.ContentEncoding = "utf-8";                   
                    await context.Response.WriteAsync(textWriter.ToString());
                    await textWriter.DisposeAsync();
                }                
@@ -165,6 +169,8 @@ internal static class Handler
             {
                 queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams).Count<TE>();
             }
+            context.Response.Headers.ContentType="text/plain";
+            context.Response.Headers.ContentEncoding = "utf-8";
             await context.Response.WriteAsync(queryResult.ToString());
         };
     }
@@ -246,10 +252,14 @@ internal static class Handler
                             await dbcontext.SaveChangesAsync();
                             byte[] jsonUtf8Bytes;
                             jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedData, options.JsonSerializerOptions);
+                            context.Response.Headers.ContentType="application/json";
+                            context.Response.Headers.ContentEncoding = "utf-8";                            
                             await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                         }
                         else
                         {
+                            context.Response.Headers.ContentType="text/plain";
+                            context.Response.Headers.ContentEncoding = "utf-8";                            
                             await context.Response.WriteAsync(Reason);
                         }
                     }
@@ -279,6 +289,8 @@ internal static class Handler
                                 await dbcontext.SaveChangesAsync();
                                 byte[] jsonUtf8Bytes;
                                 jsonUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(recivedDataList, options.JsonSerializerOptions);
+                                context.Response.Headers.ContentType="application/json";
+                                context.Response.Headers.ContentEncoding = "utf-8";                                  
                                 await context.Response.WriteAsync(Encoding.UTF8.GetString(jsonUtf8Bytes));
                             }
                         }
@@ -315,6 +327,8 @@ internal static class Handler
                         await dbcontext.SaveChangesAsync();
                         StringWriter textWriter = new();
                         serializer.Serialize(textWriter, recivedDataL.ToList());
+                        context.Response.Headers.ContentType="application/xlm";
+                        context.Response.Headers.ContentEncoding = "utf-8";                    
                         await context.Response.WriteAsync(textWriter.ToString());
                         await textWriter.DisposeAsync();
                     }
@@ -361,6 +375,8 @@ internal static class Handler
                             dbcontext.Set<TE>().Remove(recivedData);
                             DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                             await dbcontext.SaveChangesAsync();
+                            context.Response.Headers.ContentType="text/plain";
+                            context.Response.Headers.ContentEncoding = "utf-8";                             
                             await context.Response.WriteAsync("Deleted");
                         }
                         else
@@ -382,10 +398,14 @@ internal static class Handler
                                 dbcontext.Set<TE>().RemoveRange(recivedDataList);
                                 DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                                 await dbcontext.SaveChangesAsync();
+                                context.Response.Headers.ContentType="text/plain";
+                                context.Response.Headers.ContentEncoding = "utf-8";                                  
                                 await context.Response.WriteAsync("Deleted");
                             }
                             else
                             {
+                                context.Response.Headers.ContentType="text/plain";
+                                context.Response.Headers.ContentEncoding = "utf-8";                                  
                                 await context.Response.WriteAsync(Reason);
                             }
                         }
@@ -413,10 +433,14 @@ internal static class Handler
                         dbcontext.Set<TE>().RemoveRange(recivedDataL);
                         DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
                         await dbcontext.SaveChangesAsync();
+                        context.Response.Headers.ContentType="text/plain";
+                        context.Response.Headers.ContentEncoding = "utf-8";                          
                         await context.Response.WriteAsync("Deleted");
                     }
                     else
                     {
+                        context.Response.Headers.ContentType="text/plain";
+                        context.Response.Headers.ContentEncoding = "utf-8";                          
                         await context.Response.WriteAsync(Reason);
                     }
                 }
