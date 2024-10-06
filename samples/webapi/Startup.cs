@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using AutoController;
+using System.Text.Json.Serialization;
 
 namespace webapi;
 
@@ -34,7 +35,7 @@ public class Startup(IConfiguration configuration)
         
         var JsonOptions = new JsonSerializerOptions
         {
-            WriteIndented = true
+            WriteIndented = true,
         };
         var options = new AutoControllerOptions() {
             JsonSerializerOptions = JsonOptions,

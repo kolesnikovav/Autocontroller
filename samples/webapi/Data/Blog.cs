@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-
+using System.Text.Json.Serialization;
 using AutoController;
 
 namespace webapi;
@@ -12,8 +12,9 @@ public class Blog : IActionBeforeSave<ApplicationDBContext>
     [Key]
     [MapToControllerGetParam]
     public int Id { get; set; }
-    public string Subject { get; set; }
-    public string Content { get; set; }
+    public string Subject { get; set; }="";
+    public string Content { get; set; }="";
+    public Author? Author { get; set; }
     public bool DoBeforeSave(ApplicationDBContext context, out string reason)
     {
         reason = "";
