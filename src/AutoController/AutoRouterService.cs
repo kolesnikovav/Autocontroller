@@ -79,6 +79,8 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
     {
         EntityKeys.TryAdd(type, entityKeyDescribtions);
     }
+    internal static List<EntityKeyDescribtion> GetEntityKeyDescribtions (Type entityType) 
+    => EntityKeys.TryGetValue(entityType, out var entityKeyDescribtions) ? entityKeyDescribtions : new List<EntityKeyDescribtion>();
 
     /// <summary>
     /// The Dictionary with all used routes
@@ -238,6 +240,35 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             };
             _autoroutes.Add(rkeyCount, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyCount, givenType));
+        }
+        // add route GET /api/<entity>/<primary keys>
+        var primaryKeys = GetEntityKeyDescribtions(givenType);
+        if (primaryKeys.Count > 0)
+        {
+            string routeEntityKey = basePath;
+            foreach (var key in primaryKeys)
+            {
+                routeEntityKey += $"/{key.Name}";
+            }
+            RouteKey rkeyGetByKey = new() { Path = routeEntityKey, HttpMethod = HttpMethod.Get };
+            if (!_autoroutes.ContainsKey(rkeyGetByKey))
+            {
+                RouteParameters rParam = new()
+                {
+                    EntityType = givenType,
+                    Handler = Handler.GetRequestDelegate("GetHandler",
+                                                            [typeof(T), givenType],
+                                                            this,
+                                                            [
+                                                                Restrictions,
+                                                                EntityKeys,
+                                                                serviceProvider,
+                                                                options,
+                                                                allowAnonimus ])
+                };
+                _autoroutes.Add(rkeyGetByKey, rParam);
+                LogInformation(string.Format("Add route {0} for {1}", rkeyGetByKey, givenType));
+            }
         }
     }
     private void AddPostRouteForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, IAutoControllerOptions options)
