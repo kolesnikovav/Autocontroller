@@ -248,7 +248,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             string routeEntityKey = basePath;
             foreach (var key in primaryKeys)
             {
-                routeEntityKey += $"/{key.Name}";
+                routeEntityKey += "/{" + key.Name+"?}";
             }
             RouteKey rkeyGetByKey = new() { Path = routeEntityKey, HttpMethod = HttpMethod.Get };
             if (!_autoroutes.ContainsKey(rkeyGetByKey))
