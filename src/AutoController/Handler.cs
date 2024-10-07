@@ -59,6 +59,20 @@ internal static class Handler
         }
         return true;
     }
+    private static IEnumerable<TE> GetDBQueryResultByRouteKeys<T, TE>(T dbcontext, Microsoft.AspNetCore.Routing.RouteValueDictionary QueryParams) 
+    where T : DbContext, IDisposable
+    where TE : class
+    {
+        IEnumerable<TE> queryResult;
+        string filterExpression = "";
+        foreach(var RouteParameters in QueryParams)
+        {
+            filterExpression += RouteParameters.Key + " = "+RouteParameters.Value + " && ";
+        }
+        filterExpression = filterExpression[..^4];
+        queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(filterExpression)];
+        return queryResult;
+    }    
     private static IEnumerable<TE> GetDBQueryResult<T, TE>(T dbcontext, UserRequestParams QueryParams) 
     where T : DbContext, IDisposable
     where TE : class
@@ -120,10 +134,19 @@ internal static class Handler
             }
             var e = entityKeys;
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
+            var QueryParamsFromRoute = context.Request.RouteValues;
             using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
             using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!;
             {
-                IEnumerable<TE> queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
+                IEnumerable<TE> queryResult;
+                if (QueryParamsFromRoute.Count > 0)
+                {
+                    queryResult = GetDBQueryResultByRouteKeys<T, TE>(dbcontext, QueryParamsFromRoute);
+                }
+                else
+                {
+                   queryResult = GetDBQueryResult<T, TE>(dbcontext, QueryParams);
+                } 
                 if (options.InteractingType == InteractingType.JSON)
                 {
                    byte[] jsonUtf8Bytes;
