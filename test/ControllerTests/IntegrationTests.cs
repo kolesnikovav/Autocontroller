@@ -83,9 +83,9 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Startup>>
     public async Task TestCountPage()
     {
         // Arrange
-        // var client = _factory.CreateClient();
+        var client = _factory.CreateClient();
         // // Arrange
-        // var defaultPage = await client.GetAsync("/api/Blogs/Count");
+        var defaultPage = await client.GetAsync("/api/Blogs/Count");
         // var defaultPage2 = await client.GetAsync("/api2/Blogs/Count");
         // var defaultPage3 = await client.GetAsync("/api3/Blogs/Count");
 
