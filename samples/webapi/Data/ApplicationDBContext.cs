@@ -15,14 +15,19 @@ public class ApplicationDBContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Blog>().Navigation(e => e.Author).AutoInclude();
-        // modelBuilder.Entity<Cats>().Navigation(e => e.Parent).AutoInclude();
+        //modelBuilder.Entity<Cats>().Navigation(e => e.Parent).AutoInclude();
 
         Cats Tom = new Cats() {Id = Guid.NewGuid(), Nickname= "Tom"};
-        Cats Jack = new Cats() {Id = Guid.NewGuid(), Nickname= "Jack"};
-
         modelBuilder.Entity<Cats>().HasData(
             [
                 Tom,
+            ]);  
+
+
+        Cats Jack = new Cats() {Id = Guid.NewGuid(), Nickname= "Jack", ParentId=Tom.Id};
+
+        modelBuilder.Entity<Cats>().HasData(
+            [
                 Jack
             ]);        
     }

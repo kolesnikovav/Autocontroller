@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<PackageId>AutoController</PackageId>
-		<Version>1.0.13</Version>
+		<Version>1.0.14</Version>
 		<Authors>Aleksandr Kolesnikov</Authors>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
