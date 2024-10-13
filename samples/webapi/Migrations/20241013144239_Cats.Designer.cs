@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -10,9 +11,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241013144239_Cats")]
+    partial class Cats
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
@@ -78,18 +81,6 @@ namespace webapi.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("Cats");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("582c1ef0-d5b5-4d52-937f-f330a8520650"),
-                            Nickname = "Tom"
-                        },
-                        new
-                        {
-                            Id = new Guid("3c29c6c2-b546-45b6-8cc2-1048be7a990f"),
-                            Nickname = "Jack"
-                        });
                 });
 
             modelBuilder.Entity("webapi.Blog", b =>

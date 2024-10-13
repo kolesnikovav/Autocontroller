@@ -312,6 +312,7 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
                                                         this,
                                                         [
                                                             Restrictions,
+                                                            EntityKeys,
                                                             serviceProvider,
                                                             options,
                                                             _dbContextBeforeSaveChangesMethod])
@@ -319,6 +320,36 @@ public class AutoRouterService<T> where T : DbContext, IDisposable
             _autoroutes.Add(rkeyDefault, rParam);
             LogInformation(string.Format("Add route {0} for {1}", rkeyDefault, givenType));
         }
+        //***
+        // add route DELETE /api/<entity>/<primary keys>
+        var primaryKeys = GetEntityKeyDescribtions(givenType);
+        if (primaryKeys.Count > 0)
+        {
+            string routeEntityKey = basePath;
+            foreach (var key in primaryKeys)
+            {
+                routeEntityKey += "/{" + key.Name+"?}";
+            }
+            RouteKey rkeyGetByKey = new() { Path = routeEntityKey, HttpMethod = HttpMethod.Delete };
+            if (!_autoroutes.ContainsKey(rkeyGetByKey))
+            {
+                RouteParameters rParam = new()
+                {
+                    EntityType = givenType,
+                    Handler = Handler.GetRequestDelegate("DeleteHandler",
+                                                            [typeof(T), givenType],
+                                                            this,
+                                                            [
+                                                                Restrictions,
+                                                                EntityKeys,
+                                                                serviceProvider,
+                                                                options,
+                                                                _dbContextBeforeSaveChangesMethod ])
+                };
+                _autoroutes.Add(rkeyGetByKey, rParam);
+                LogInformation(string.Format("Add route {0} for {1}", rkeyGetByKey, givenType));
+            }
+        }        
     }
     private void AddUpdateRouteForEntity(IServiceProvider serviceProvider, string controllerName, Type givenType, IAutoControllerOptions options)
     {

@@ -9,6 +9,10 @@ namespace AutoController;
 public class AutoControllerOptions : IAutoControllerOptions
 {
     /// <summary>
+    /// indicates that the service is running in development mode
+    /// </summary>    
+    public bool IsDevelopment { get; set; }=false;
+    /// <summary>
     /// Start prefix segment for route
     /// </summary>
     public string RoutePrefix { get; set; }=string.Empty;
