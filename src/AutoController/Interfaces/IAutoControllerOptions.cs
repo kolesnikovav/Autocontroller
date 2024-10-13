@@ -8,9 +8,14 @@ namespace AutoController;
 /// </summary>
 public interface IAutoControllerOptions
 {
+
+    /// <summary>
+    /// indicates that the service is running in development mode
+    /// </summary>
+    bool IsDevelopment { get; set; } 
     /// <summary>
     /// Start prefix segment for route
-    /// </summary>
+    /// </summary>    
     string RoutePrefix { get; set; }
     /// <summary>
     /// The action path of default GET request

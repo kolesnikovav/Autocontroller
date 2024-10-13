@@ -38,6 +38,7 @@ public class Startup(IConfiguration configuration)
             WriteIndented = true,
         };
         var options = new AutoControllerOptions() {
+            IsDevelopment = env.IsDevelopment(),
             JsonSerializerOptions = JsonOptions,
             LogInformation = true,
             RoutePrefix="api",

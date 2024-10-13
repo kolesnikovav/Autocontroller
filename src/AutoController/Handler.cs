@@ -12,6 +12,11 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Query;
+using Org.BouncyCastle.Asn1.X509.Qualified;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using ZstdSharp.Unsafe;
 
 namespace AutoController;
 internal static class Handler
@@ -33,6 +38,13 @@ internal static class Handler
         stream.Position = 0;
         return stream;
     }
+    private static List<EntityKeyDescribtion> GetEntityKeyDescribtions<T, TE>() 
+    where T : DbContext, IDisposable
+    where TE : class    
+    {
+        return AutoRouterService<T>.GetEntityKeyDescribtions(typeof(TE));
+    }
+
     private static bool Authorization<TE>(HttpContext context,
                                             HttpMethod requestMethod,
                                             Dictionary<string, List<AuthorizeAttribute>> restrictions,
@@ -59,19 +71,108 @@ internal static class Handler
         }
         return true;
     }
-    private static IEnumerable<TE> GetDBQueryResultByRouteKeys<T, TE>(T dbcontext, Microsoft.AspNetCore.Routing.RouteValueDictionary QueryParams) 
+    private static IEnumerable<TE> GetDBQueryResultByRouteKeys<T, TE>(
+        T dbcontext,
+        Microsoft.AspNetCore.Routing.RouteValueDictionary QueryParams,
+        List<EntityKeyDescribtion> entityKeyDescribtions) 
     where T : DbContext, IDisposable
     where TE : class
     {
         IEnumerable<TE> queryResult;
-        string filterExpression = "";
+        List<Expression> expressions = [];
+        Expression? expressionEqulityAll = null;
+        ParameterExpression inputParam = Expression.Parameter(typeof(TE), "x");
         foreach(var RouteParameters in QueryParams)
         {
-            filterExpression += RouteParameters.Key + " = "+RouteParameters.Value + " && ";
+            var entityKeyDescribtion = entityKeyDescribtions.FirstOrDefault(x => x.Name == RouteParameters.Key);
+            Expression c;
+            Type typeKey = entityKeyDescribtion.KeyType;
+
+            var routeParam = RouteParameters.Value as string ?? "";
+            if (routeParam == null) continue;
+            MemberInfo? memberInfo = typeof(TE).GetMember(entityKeyDescribtion.Name).FirstOrDefault();
+            if (memberInfo == null) continue;
+            Expression inputParamAccess = inputParam.MakeMemberAccess(memberInfo);
+
+            if (typeKey == typeof(int))
+            {
+                var p = int.TryParse(routeParam, out int o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid int type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey);
+            } else if (typeKey == typeof(Guid))
+            {
+                var p = Guid.TryParse(routeParam, out Guid o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid Guid type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey);                
+            } else if (typeKey == typeof(uint))
+            {
+                var p = uint.TryParse(routeParam, out uint o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid uint type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey); 
+            } else if (typeKey == typeof(bool))
+            {
+                var p = bool.TryParse(routeParam, out bool o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid bool type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey); 
+            } else if (typeKey == typeof(DateOnly))
+            {
+                var p = DateOnly.TryParse(routeParam, out DateOnly o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid DateOnly type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey); 
+            } else if (typeKey == typeof(DateTime))
+            {
+                var p = DateTime.TryParse(routeParam, out DateTime o);
+                if (!p)
+                {
+                    throw new TypeAccessException($"Invalid DateTime type conversion {routeParam}");
+                }
+                c = Expression.Constant(o, typeKey);                 
+            } else 
+            {
+                c = Expression.Constant(routeParam, typeof(string));
+            }
+            Expression eqExpression = Expression.Equal(inputParamAccess, c);
+            expressions.Add(eqExpression);
         }
-        filterExpression = filterExpression[..^4];
-        queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where(filterExpression)];
-        return queryResult;
+        if (expressions.Count == 1) 
+        {
+            expressionEqulityAll = expressions[0];
+        } else if (expressions.Count > 1)
+        {
+            
+            Expression[] expressionsA = [];
+            for (int i = 0; i < expressions.Count-2; i++)
+            {
+                var eq = Expression.AndAlso(expressions[i], expressions[i+1]);
+                _ = expressionsA.Append(eq);
+            }
+            expressionEqulityAll = Expression.Block(expressionsA);
+        }
+        if (expressionEqulityAll != null)
+        {
+            Func<TE, bool> f= Expression.Lambda<Func<TE, bool>>(expressionEqulityAll, inputParam).Compile();
+            if (f != null) 
+            {
+                queryResult = [.. dbcontext.Set<TE>().AsNoTracking().Where<TE>(f)];
+                return queryResult;                  
+            }
+        }
+        return [];
     }    
     private static IEnumerable<TE> GetDBQueryResult<T, TE>(T dbcontext, UserRequestParams QueryParams) 
     where T : DbContext, IDisposable
@@ -132,7 +233,6 @@ internal static class Handler
             {
                 return;
             }
-            var e = entityKeys;
             var QueryParams = RequestParams.RetriveQueryParam(context.Request.Query, options.RequestParamNames);
             var QueryParamsFromRoute = context.Request.RouteValues;
             using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
@@ -141,7 +241,8 @@ internal static class Handler
                 IEnumerable<TE> queryResult;
                 if (QueryParamsFromRoute.Count > 0)
                 {
-                    queryResult = GetDBQueryResultByRouteKeys<T, TE>(dbcontext, QueryParamsFromRoute);
+                    var keys = GetEntityKeyDescribtions<T, TE>();
+                    queryResult = GetDBQueryResultByRouteKeys<T, TE>(dbcontext, QueryParamsFromRoute, keys);
                 }
                 else
                 {
@@ -366,6 +467,7 @@ internal static class Handler
     }
     private static RequestDelegate DeleteHandler<T, TE>(
         Dictionary<string, List<AuthorizeAttribute>> restrictions,
+        Dictionary<Type, List<EntityKeyDescribtion>> entityKeys,
         IServiceProvider serviceProvider,
         IAutoControllerOptions options,
         MethodInfo? dbContextBeforeSaveChangesMethod = null) where T : DbContext, IDisposable
@@ -383,8 +485,29 @@ internal static class Handler
             var mi = GetActionBeforeDelete<TE>();
             string Reason = "";
             using IServiceScope serviceProviderScoped = serviceProvider.CreateScope();
-            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!; 
-            if (options.InteractingType == InteractingType.JSON)
+            using T dbcontext = serviceProviderScoped.ServiceProvider.GetService<T>()!;
+            var QueryParamsFromRoute = context.Request.RouteValues;
+            if (QueryParamsFromRoute.Count > 0)
+            {
+                var keys = GetEntityKeyDescribtions<T, TE>();
+                TE? queryResult = GetDBQueryResultByRouteKeys<T, TE>(dbcontext, QueryParamsFromRoute, keys).FirstOrDefault();
+                if (queryResult != null)
+                {
+                    if (CheckAllowed<T, TE>(dbcontext, queryResult, mi, out Reason))
+                    {
+                        dbcontext.Set<TE>().Remove(queryResult);
+                        DoBeforeContextSaveChanges<T>(dbContextBeforeSaveChangesMethod, dbcontext);
+                        await dbcontext.SaveChangesAsync();
+                        context.Response.Headers.ContentType = "text/plain";
+                        context.Response.Headers.ContentEncoding = "utf-8";
+                        await context.Response.WriteAsync("Deleted");
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync(Reason);
+                    }
+                }
+            } else if (options.InteractingType == InteractingType.JSON)
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
