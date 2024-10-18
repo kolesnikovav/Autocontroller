@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Collections.Generic;
+using System.Net.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace AutoController;
 /// <summary>
@@ -56,13 +58,63 @@ public static class AutoControllerExtention
         var service = (AutoRouterService<T>?)builder.ApplicationServices.GetService(typeof(AutoRouterService<T>)) ?? throw (new Exception("You forgive register AutoRouterService in DI.\n Put services.AddAutoController<ApplicationDBContext>(); in ConfigureServices(IServiceCollection services) in Startup class"));
         return service;
     }
-    private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters)
+    private static void AddRoute(IApplicationBuilder builder, RouteKey key, RouteParameters parameters, IAutoControllerOptions options)
     {
-        var routeHandler = new RouteHandler(parameters.Handler);
-        var routeBuilder = new RouteBuilder(builder, routeHandler);
-        routeBuilder.MapRoute(key.ToString(), key.Path);
-        builder.UseRouter(routeBuilder.Build());
+        // var routeHandler = new RouteHandler(parameters.Handler);
+        // var routeBuilder = new RouteBuilder(builder, routeHandler);
+        // routeBuilder.MapRoute(key.ToString(), key.Path);
+        // builder.UseRouter(routeBuilder.Build());
+        builder.UseEndpoints(e => 
+        {
+            var a =e.MapAutoRoute(key,parameters.Handler, options);
+        });        
     }
+    private static IEndpointConventionBuilder MapAutoRoute(
+        this IEndpointRouteBuilder endpointRouteBuilder,
+        RouteKey key,
+        RequestDelegate handler,
+        IAutoControllerOptions options) 
+    {
+        IEndpointConventionBuilder result;
+        string verb;
+        if (key.HttpMethod == HttpMethod.Get)
+        {
+            verb = "GET";
+           result =  endpointRouteBuilder.MapGet(key.Path,handler); 
+        }
+        else if (key.HttpMethod == HttpMethod.Post)
+        {
+            verb = "POST";
+            result =  endpointRouteBuilder.MapPost(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Patch)
+        {
+            verb = "PATCH";
+            result = endpointRouteBuilder.MapPatch(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Delete)
+        {
+            verb = "DELETE";
+            result = endpointRouteBuilder.MapDelete(key.Path,handler);
+        }
+        else if (key.HttpMethod == HttpMethod.Put)
+        {
+            verb = "PUT";
+            result = endpointRouteBuilder.MapPut(key.Path,handler);
+        } 
+        else
+        {
+            verb = "GET";
+            result =  endpointRouteBuilder.MapGet(key.Path,handler);
+        }
+        var metadata = new AutoControllerRouteMetadata(verb,options.RoutePrefix,key.Path, key.Path ,"" , options.InteractingType);
+        return result
+        .WithName(key.Path)
+        .WithDescription(key.ToString())
+        .WithMetadata(metadata)
+        .WithGroupName(options.RoutePrefix);
+
+    }    
 
     /// <summary>
     /// Adds autocontroller for DBContext.
@@ -88,7 +140,7 @@ public static class AutoControllerExtention
         autoRouter.GetAutoControllers(actualOptions, serviceProvider);
         foreach (var route in autoRouter.Autoroutes)
         {
-            AddRoute(appBuilder, route.Key, route.Value);
+            AddRoute(appBuilder, route.Key, route.Value, actualOptions);
         }        
     }
     private static ILogger GetOrCreateLogger(

@@ -51,11 +51,12 @@ public class Startup(IConfiguration configuration)
             RoutePrefix="api2",
             AuthentificationPath  = "/login",
             AccessDeniedPath = "/anauthorized"
-        };        
+        }; 
+        app.UseRouting();       
 
         app.UseAutoController<ApplicationDBContext>(options);
         app.UseAutoController<ApplicationDBContext>(optionsXML);
-        app.UseRouting();
+        
 
         app.UseEndpoints(endpoints =>
         {
